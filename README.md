@@ -15,13 +15,13 @@ I run the legiscan ETL notebooks weekly, as the getDataset section I am using up
 I update the legislation and rulemaking databases with my email alerts from congress.gov and federal register saved searches manually as well. 
 
 **Databases**    
-SQL Database - UAS_Tracker.db    
-CSV Export of UAS_Tracker.db for easy historial viewing - Exported_SQL_Legislation_Table.csv    
-Raw data from LegiScan API before extraction and cleaning - folder/legiscan_getDatasetRaw_data    
-USASpending data for analysis - folder/Spending.gov downloaded data    
+SQL Database - *UAS_Tracker.db*    
+CSV Export of UAS_Tracker.db for easy historial viewing - *Exported_SQL_Legislation_Table.csv*    
+Raw data from LegiScan API before extraction and cleaning - *folder/legiscan_getDatasetRaw_data*    
+USASpending data for analysis - *folder/Spending.gov downloaded data*    
     
 **Code**    
-Legiscan API ETL - folder/notebooks    
+Legiscan API ETL - *folder/notebooks*    
 
 
 
