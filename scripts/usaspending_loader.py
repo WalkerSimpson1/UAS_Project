@@ -129,7 +129,7 @@ def award_fields(row):
 
 
 class WeeklyRun:
-    def __init__(self, db, run_date, api=None, zfs_snapshot_pre=None):
+    def __init__(self, db, run_date, api=None, zfs_snapshot_pre=None, run_tag=None):
         self.db = db
         self.run_date = run_date
         self.today = day(run_date)
@@ -142,6 +142,7 @@ class WeeklyRun:
         self.run_doc_id = db.runs.insert_one({
             "run_id": self.run_id,
             "pipeline": "usaspending",
+            "run_tag": run_tag,
             "started_at": datetime.now(timezone.utc),
             "status": "running",
             "zfs_snapshot_pre": zfs_snapshot_pre,
@@ -505,6 +506,23 @@ class WeeklyRun:
         return status
 
 
+def weekly(db, run_date=None, backfill_method="auto", test_award_unique_id=False,
+           coverage_pull=True, zfs_snapshot_pre=None, run_tag=None):
+    """Steps 1-5 in D7 order. Returns (WeeklyRun, status)."""
+    create_indexes(db, {"contracts", "contract_transactions", "contracts_weekly_transactions_all"})
+    run = WeeklyRun(db, run_date or date.today(), zfs_snapshot_pre=zfs_snapshot_pre, run_tag=run_tag)
+    feed = run.step("weekly_feed", run.weekly_feed) or {}
+    run.step("txn_history", run.transaction_history, set(feed), "weekly_feed", "txn_history")
+    run.step("award_search", run.award_search)
+    if coverage_pull:
+        run.step("coverage_pull", run.coverage_pull, set(feed))
+    if test_award_unique_id:
+        run.step("award_unique_id_test", run.award_unique_id_test)
+    run.step("backfill", run.backfill, backfill_method)
+    run.step("integrity", run.integrity)
+    return run, run.finish()
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--db", help="database name (default: MONGO_DB or uas_tracker)")
@@ -517,23 +535,14 @@ def main():
     args = p.parse_args()
 
     db = get_db(args.db)
-    create_indexes(db, {"contracts", "contract_transactions", "contracts_weekly_transactions_all"})
-    run = WeeklyRun(db, args.run_date, zfs_snapshot_pre=args.zfs_snapshot_pre)
-
     if args.only_award_unique_id_test:
+        create_indexes(db, {"contracts", "contract_transactions", "contracts_weekly_transactions_all"})
+        run = WeeklyRun(db, args.run_date, zfs_snapshot_pre=args.zfs_snapshot_pre)
         run.step("award_unique_id_test", run.award_unique_id_test)
+        status = run.finish()
     else:
-        feed = run.step("weekly_feed", run.weekly_feed) or {}
-        run.step("txn_history", run.transaction_history, set(feed), "weekly_feed", "txn_history")
-        run.step("award_search", run.award_search)
-        if not args.no_coverage_pull:
-            run.step("coverage_pull", run.coverage_pull, set(feed))
-        if args.test_award_unique_id:
-            run.step("award_unique_id_test", run.award_unique_id_test)
-        run.step("backfill", run.backfill, args.backfill_method)
-        run.step("integrity", run.integrity)
-
-    status = run.finish()
+        run, status = weekly(db, args.run_date, args.backfill_method, args.test_award_unique_id,
+                             not args.no_coverage_pull, args.zfs_snapshot_pre)
     print(json.dumps({"run_id": run.run_id, "status": status, "errors": run.errors, "steps": run.steps},
                      indent=1, default=str))
     if status != "ok":

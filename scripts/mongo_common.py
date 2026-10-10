@@ -29,7 +29,7 @@ AWARD_KEY_RE = re.compile(r"^CONT_(AWD|IDV)_")
 def get_db(db_name=None):
     uri = os.getenv("MONGO_URI", "mongodb://127.0.0.1:27017/")
     client = MongoClient(uri, tz_aware=False)
-    return client[db_name or os.getenv("MONGO_DB", DEFAULT_DB)]
+    return client[db_name or os.getenv("MONGO_DB") or DEFAULT_DB]
 
 
 def raw_root():

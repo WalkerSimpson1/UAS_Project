@@ -12,7 +12,8 @@ dataset_hash isn't already in manifest.jsonl (LegiScan requires this):
     python scripts/legiscan_loader.py --download
 
 Re-running on the same day changes nothing: snapshots are keyed on
-(bill_id, snapshot_date) and written with $setOnInsert.
+(bill_id, snapshot_date) and written with $setOnInsert. A dataset an earlier
+run already loaded is skipped (LegiScan didn't refresh) unless --reload.
 """
 
 import argparse
@@ -22,6 +23,7 @@ import re
 import shutil
 import zipfile
 from datetime import date, datetime, timezone
+from pathlib import Path
 
 import requests
 from pymongo import UpdateOne
@@ -175,7 +177,7 @@ def import_zip(store, zip_path):
     Returns (relative path, dataset_date)."""
     m = ZIP_NAME_RE.search(str(zip_path))
     if not m:
-        raise SystemExit(f"can't read dataset_date from zip name: {zip_path}")
+        raise ValueError(f"can't read dataset_date from zip name: {zip_path}")
     dataset_date = m.group(1)
     sha = sha256_file(zip_path)
     for e in legiscan_zip_entries(store):
@@ -194,7 +196,7 @@ def download(store, api_key):
     resp.raise_for_status()
     listing = resp.json()
     if listing.get("status") != "OK":
-        raise SystemExit(f"getDatasetList failed: {listing}")
+        raise RuntimeError(f"getDatasetList failed: {listing}")
     ds = listing["datasetlist"][0]  # same choice as LegiScan1.ipynb
     dataset_date, dataset_hash = ds["dataset_date"], ds["dataset_hash"]
 
@@ -222,22 +224,62 @@ def download(store, api_key):
 # ---------------------------------------------------------------- run
 
 
-def run(db, store, zip_rel, dataset_date, snapshot_date):
+def newest_zip(folder):
+    """Newest getDatasetRaw<date>.zip in a folder, by the date in its name."""
+    zips = [p for p in Path(folder).glob("getDatasetRaw*.zip") if ZIP_NAME_RE.search(p.name)]
+    if not zips:
+        raise FileNotFoundError(f"no getDatasetRaw<date>.zip in {folder}")
+    return max(zips, key=lambda p: p.name)
+
+
+def already_loaded(db, dataset_date, snapshot_date):
+    """Snapshot date of an earlier run that loaded this dataset, or None.
+    A same-day re-run doesn't count (its upserts are no-ops)."""
+    prev = db.legislation_history.find_one(
+        {"dataset_date": dataset_date, "snapshot_date": {"$ne": snapshot_date}},
+        sort=[("snapshot_date", -1)])
+    return prev["snapshot_date"] if prev else None
+
+
+def ingest(db, zip_path=None, snapshot_date=None, reload=False, run_tag=None):
+    """Load one LegiScan dataset: the given zip, or a download when zip_path
+    is None. Skips a dataset an earlier run already loaded (the LegiScan
+    dataset didn't refresh), as weekly_run.sh does for SQLite, unless reload.
+    Writes a runs document and returns it."""
+    snapshot_date = snapshot_date or date.today()
     started = datetime.now(timezone.utc)
-    bills = uas_bills(store.root / zip_rel)
-    docs = [snapshot_doc(b, snapshot_date, to_datetime(dataset_date), zip_rel) for b in bills]
-    steps = write_snapshots(db, docs)
-    db.runs.insert_one({
+    create_indexes(db, {"legislation_history", "legislation"})
+    store = RawStore(f"legiscan-{snapshot_date}")
+    if zip_path:
+        zip_rel, dataset_date = import_zip(store, zip_path)
+    else:
+        api_key = os.getenv("LEGI_API_KEY")
+        if not api_key:
+            raise RuntimeError("LEGI_API_KEY is not set in .env")
+        zip_rel, dataset_date = download(store, api_key)
+
+    snap_dt, dataset_dt = day(snapshot_date), to_datetime(dataset_date)
+    loaded_on = None if reload else already_loaded(db, dataset_dt, snap_dt)
+    if loaded_on:
+        status = "skipped"
+        steps = {"skipped": f"dataset {dataset_date} already loaded on {loaded_on:%Y-%m-%d}"}
+    else:
+        status = "ok"
+        bills = uas_bills(store.root / zip_rel)
+        steps = write_snapshots(db, [snapshot_doc(b, snap_dt, dataset_dt, zip_rel) for b in bills])
+    doc = {
         "run_id": store.run_id,
         "pipeline": "legiscan",
+        "run_tag": run_tag,
         "started_at": started,
         "finished_at": datetime.now(timezone.utc),
-        "status": "ok",
-        "dataset_date": to_datetime(dataset_date),
+        "status": status,
+        "dataset_date": dataset_dt,
         "raw_folder": zip_rel.rsplit("/", 1)[0],
         "steps": steps,
-    })
-    return steps
+    }
+    doc["_id"] = db.runs.insert_one(doc).inserted_id
+    return doc
 
 
 def main():
@@ -247,23 +289,15 @@ def main():
     src.add_argument("--download", action="store_true", help="fetch from the LegiScan API")
     p.add_argument("--snapshot-date", type=date.fromisoformat, default=date.today(),
                    help="run date recorded as snapshot_date (default: today)")
+    p.add_argument("--reload", action="store_true",
+                   help="load the dataset even if an earlier run already loaded it")
     p.add_argument("--db", help="database name (default: MONGO_DB or uas_tracker)")
     args = p.parse_args()
 
-    db = get_db(args.db)
-    create_indexes(db, {"legislation_history", "legislation"})
-    store = RawStore(f"legiscan-{args.snapshot_date}")
-    if args.zip:
-        zip_rel, dataset_date = import_zip(store, args.zip)
-    else:
-        api_key = os.getenv("LEGI_API_KEY")
-        if not api_key:
-            raise SystemExit("LEGI_API_KEY is not set in .env")
-        zip_rel, dataset_date = download(store, api_key)
-
-    steps = run(db, store, zip_rel, dataset_date, day(args.snapshot_date))
-    print(f"dataset {dataset_date} from {zip_rel}, snapshot {args.snapshot_date}")
-    print(json.dumps(steps, indent=1))
+    run = ingest(get_db(args.db), args.zip, args.snapshot_date, args.reload)
+    print(f"dataset {run['dataset_date']:%Y-%m-%d} from {run['raw_folder']}, "
+          f"snapshot {args.snapshot_date}: {run['status']}")
+    print(json.dumps(run["steps"], indent=1))
 
 
 if __name__ == "__main__":
