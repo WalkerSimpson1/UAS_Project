@@ -64,8 +64,9 @@ log()  { printf '%s %s\n' "$(date '+%F %T')" "$*"; }
 warn() { log "WARNING: $*"; printf '%s\n' "$*" >> "$WARN_FILE"; }
 
 # Runs a state-changing command, or prints it under --dry-run.
+# fd 9 is the run lock (see main); children must not inherit it.
 run() {
-  if (( DRY_RUN )); then log "DRY: $*"; else "$@"; fi
+  if (( DRY_RUN )); then log "DRY: $*"; else "$@" 9>&-; fi
 }
 
 # Prints KEY's value from .env (python-dotenv style KEY=value, optional quotes).
@@ -133,6 +134,9 @@ run_isolated() {
   trap - ERR
   set +e
   (
+    # Drop the run lock's fd so nothing the step starts (e.g. a hung Jupyter kernel)
+    # can hold the lock past this run. The parent's fd keeps the lock held.
+    exec 9>&-
     set -e
     trap 'log "error at line $LINENO: $BASH_COMMAND"' ERR
     "$@"
