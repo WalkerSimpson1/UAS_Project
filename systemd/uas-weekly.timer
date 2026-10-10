@@ -1,0 +1,12 @@
+# The LegiScan US dataset refreshes on Sundays. Persistent=true runs a missed
+# week at the next boot/login (laptop was off or asleep at the scheduled time).
+[Unit]
+Description=Weekly UAS Tracker run, Sunday evening
+
+[Timer]
+OnCalendar=Sun *-*-* 19:00:00
+Persistent=true
+Unit=uas-weekly.service
+
+[Install]
+WantedBy=timers.target
