@@ -170,22 +170,11 @@ run_notebook() {
     "$REPO_DIR/notebooks/$1.ipynb"
 }
 
-# LegiScan2 reads a zip name hardcoded in the notebook and does a plain INSERT,
-# so only run it when that zip is the newest one and hasn't been loaded yet.
+# LegiScan2 loads the newest zip with a plain INSERT, so only run it when that
+# zip hasn't been loaded yet.
 legiscan2_ready() {
-  local newest refs loaded
+  local newest loaded
   newest=$(find "$REPO_DIR/legiscan_getDatasetRaw_data" -maxdepth 1 -name 'getDatasetRaw*.zip' -printf '%f\n' | sort | tail -n 1)
-  refs=$("$PY" - "$REPO_DIR/notebooks/LegiScan2.ipynb" <<'EOF'
-import json, re, sys
-nb = json.load(open(sys.argv[1]))
-src = "".join("".join(c["source"]) for c in nb["cells"] if c["cell_type"] == "code")
-print(" ".join(sorted(set(re.findall(r"getDatasetRaw[0-9-]+\.zip", src)))))
-EOF
-  )
-  if [[ $refs != "$newest" ]]; then
-    warn "LegiScan2 skipped: it reads '$refs' but the newest zip is '$newest' (update the CHANGE ZIP FILE cells)"
-    return 1
-  fi
   # Runs happen after the dataset date, so a load on or after it means this zip is in already.
   loaded=$("$PY" - "$REPO_DIR/UAS_Tracker.db" <<'EOF'
 import sqlite3, sys
