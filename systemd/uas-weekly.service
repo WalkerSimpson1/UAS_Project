@@ -1,0 +1,18 @@
+# User unit: install with systemd/install.sh, which rewrites %h/UAS_Project
+# to the checkout it is run from. Runs as the user, not root: ZFS access is
+# delegated with `zfs allow` and mongod stop/start uses a narrow sudoers rule.
+[Unit]
+Description=UAS Tracker weekly run (SQLite notebooks + MongoDB ingest)
+Documentation=file:%h/UAS_Project/docs/mongodb_schema.md
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/UAS_Project
+ExecStart=%h/UAS_Project/weekly_run.sh
+# Exit 2 = completed with warnings (e.g. LegiScan didn't refresh); listed in the journal, not a failure.
+SuccessExitStatus=2
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=4h
+# On stop/timeout the script gets SIGTERM and rolls back; give it time.
+TimeoutStopSec=10min

@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Destroys one weekly_run.sh snapshot. Installed root-owned to /usr/local/sbin by
+# systemd/install.sh and allowed via sudoers, so the pipeline user needs no
+# `zfs allow destroy` (which would cover the datasets and every snapshot on them).
+set -euo pipefail
+
+NAME_RE='^uaspool/(mongo|raw)@weekly-[0-9]{4}-[0-9]{2}-[0-9]{2}(_[0-9]+)?-(pre|post)$'
+
+if (( $# != 1 )) || [[ ! $1 =~ $NAME_RE ]]; then
+  echo "usage: uas-zfs-prune uaspool/(mongo|raw)@weekly-YYYY-MM-DD[_N]-(pre|post)" >&2
+  exit 2
+fi
+/usr/sbin/zfs list -H -t snapshot -o name "$1" >/dev/null
+exec /usr/sbin/zfs destroy "$1"
