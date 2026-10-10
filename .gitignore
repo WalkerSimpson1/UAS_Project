@@ -222,3 +222,6 @@ __marimo__/
 .streamlit/secrets.toml
 
 .venv/
+
+# Raw API files live on /uaspool/raw (ZFS), not in git
+raw/
