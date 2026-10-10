@@ -6,32 +6,31 @@ set -euo pipefail
 REPO_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 SESSION=uas
 
-# Prints KEY's value from .env (python-dotenv style KEY=value, optional quotes).
-env_value() {
-  local line
-  line=$(grep -E "^[[:space:]]*(export[[:space:]]+)?$1=" "$REPO_DIR/.env" 2>/dev/null | tail -n 1) || return 0
-  line=${line#*=}
-  line=${line%\"}; line=${line#\"}
-  line=${line%\'}; line=${line#\'}
-  printf '%s' "$line"
-}
+# mongosh reads MONGO_URI/MONGO_DB from the environment or .env itself, so the URI
+# (and any credentials in it) stays off the command line (ps) and out of tmux's
+# session environment. Runs with the pane's cwd, the repo root.
+MONGOSH_INIT=$(cat <<'EOF'
+const env = require("fs").existsSync(".env") ? require("fs").readFileSync(".env", "utf8") : "";
+const fromEnv = k => {
+  const m = [...env.matchAll(new RegExp("^\\s*(?:export\\s+)?" + k + "=(.*)$", "gm"))].pop();
+  return m ? m[1].trim().replace(/^[\x22\x27]|[\x22\x27]$/g, "") : "";
+};
+db = connect(process.env.MONGO_URI || fromEnv("MONGO_URI") || "mongodb://127.0.0.1:27017/")
+  .getSiblingDB(process.env.MONGO_DB || fromEnv("MONGO_DB") || "uas_tracker");
+EOF
+)
+MONGOSH_INIT=${MONGOSH_INIT//$'\n'/ }
 
 if ! tmux has-session -t "=$SESSION" 2>/dev/null; then
-  mongo_uri=${MONGO_URI:-$(env_value MONGO_URI)}
-  mongo_db=${MONGO_DB:-$(env_value MONGO_DB)}
-
   # Panes start a shell and get their command via send-keys, so they stay open
   # if the program exits (e.g. mongod is down).
   left=$(tmux new-session -d -s "$SESSION" -c "$REPO_DIR" -P -F '#{pane_id}')
-  tmux set-environment -t "$SESSION" MONGO_URI "${mongo_uri:-mongodb://127.0.0.1:27017/}"
-  tmux set-environment -t "$SESSION" MONGO_DB "${mongo_db:-uas_tracker}"
   top_right=$(tmux split-window -h -t "$left" -c "$REPO_DIR" -P -F '#{pane_id}')
   bottom_right=$(tmux split-window -v -t "$top_right" -c "$REPO_DIR" -P -F '#{pane_id}')
 
   tmux send-keys -t "$left" 'claude' Enter
   tmux send-keys -t "$top_right" 'nvim .' Enter
-  tmux send-keys -t "$bottom_right" \
-    'mongosh "$MONGO_URI" --shell --eval "db = db.getSiblingDB(process.env.MONGO_DB)"' Enter
+  tmux send-keys -t "$bottom_right" "mongosh --nodb --shell --quiet --eval '$MONGOSH_INIT'" Enter
   tmux select-pane -t "$left"
 fi
 
