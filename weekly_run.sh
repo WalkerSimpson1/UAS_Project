@@ -117,7 +117,9 @@ step() {
 preflight() {
   local ok=1
   [[ -x $PY ]] || { log "no python at $PY (set UAS_VENV)"; ok=0; }
-  [[ -x $VENV/bin/jupyter ]] || { log "no jupyter in $VENV"; ok=0; }
+  # The jupyter launcher exists without nbconvert; check the subcommand actually runs.
+  "$VENV/bin/jupyter" nbconvert --version >/dev/null 2>&1 \
+    || { log "jupyter nbconvert not available in $VENV (pip install nbconvert)"; ok=0; }
   [[ -f $REPO_DIR/.env ]] || { log "no $REPO_DIR/.env"; ok=0; }
   [[ -f $INGEST ]] || { log "missing $INGEST"; ok=0; }
   for ds in "$MONGO_DATASET" "$RAW_DATASET"; do
