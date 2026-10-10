@@ -93,6 +93,8 @@ rollback() {
 
 fail() {
   trap - ERR INT TERM
+  # If tee is gone anyway, a write must not SIGPIPE us before the rollback.
+  trap '' PIPE
   log "FAILED: $1"
   if (( ROLLBACK_ARMED )); then
     rollback || log "ROLLBACK INCOMPLETE: fix by hand before the next run"
@@ -300,7 +302,9 @@ offsite_copy() {
 
 mkdir -p "$STATE_DIR/logs"
 LOG_FILE=$STATE_DIR/logs/run-$(date +%F_%H%M%S).log
-exec > >(tee -a "$LOG_FILE") 2>&1
+# systemd stop/timeout sends SIGTERM to the whole cgroup and Ctrl-C reaches the whole
+# process group; tee must outlive them so fail() can still log and roll back.
+exec > >(trap '' INT TERM; exec tee -a "$LOG_FILE") 2>&1
 
 exec 9>"$STATE_DIR/lock"
 flock -n 9 || { log "another weekly run is in progress"; exit 1; }
