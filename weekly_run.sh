@@ -25,6 +25,8 @@ MONGO_DATASET=uaspool/mongo
 RAW_DATASET=uaspool/raw
 BACKUP_DIR=/uaspool/backups
 MONGOD_UNIT=mongod
+# Root-owned, sudo-allowed; destroys only @weekly-* snapshots (systemd/uas-zfs-prune).
+ZFS_PRUNE=/usr/local/sbin/uas-zfs-prune
 INGEST=$REPO_DIR/scripts/weekly_ingest.py
 
 # Run order matches the manual weekly update. The one-time USASpending_Past_* loaders are not run.
@@ -134,6 +136,8 @@ preflight() {
     sudo -n -l systemctl "$action" "$MONGOD_UNIT" >/dev/null 2>&1 \
       || { log "no passwordless sudo for 'systemctl $action $MONGOD_UNIT' (systemd/install.sh)"; ok=0; }
   done
+  sudo -n -l "$ZFS_PRUNE" >/dev/null 2>&1 \
+    || { log "no passwordless sudo for $ZFS_PRUNE (systemd/install.sh)"; ok=0; }
   if (( ok )); then
     mongo_counts >/dev/null || { log "cannot reach MongoDB at MONGO_URI"; ok=0; }
   fi
@@ -286,7 +290,7 @@ prune() {
     [[ $d == "${month_first[${d:0:7}]}" && ! $d < $cutoff_monthly ]] && continue
     log "prune: $name"
     case $kind in
-      snap) [[ $name == *@weekly-* ]] && { run zfs destroy "$name" || return 1; } ;;
+      snap) run sudo -n "$ZFS_PRUNE" "$name" || return 1 ;;
       dump) run rm -f -- "$name" || return 1 ;;
     esac
   done
