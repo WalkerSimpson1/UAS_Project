@@ -28,7 +28,7 @@ from pathlib import Path
 import requests
 from pymongo import UpdateOne
 
-from mongo_common import RawStore, bulk, day, get_db, iso_day, sha256_file, to_datetime
+from mongo_common import RawStore, bulk, day, get_db, iso_day, redact, sha256_file, to_datetime
 from mongo_indexes import create_indexes
 
 LEGISCAN_URL = "https://api.legiscan.com/"
@@ -189,14 +189,24 @@ def import_zip(store, zip_path):
     return rel, dataset_date
 
 
+def legiscan_get(params, timeout):
+    """GET the LegiScan API. requests' error messages contain the full URL,
+    including the API key and access_key, so re-raise without it (and without
+    the chained exception, which tracebacks would print)."""
+    try:
+        resp = requests.get(LEGISCAN_URL, params=params, timeout=timeout)
+        resp.raise_for_status()
+    except requests.RequestException as e:
+        raise RuntimeError(f"LegiScan {params.get('op')} failed: {redact(e)}") from None
+    return resp
+
+
 def download(store, api_key):
     """getDatasetList, then getDatasetRaw only for an unseen dataset_hash.
     Returns (relative path, dataset_date)."""
-    resp = requests.get(LEGISCAN_URL, params={"key": api_key, "op": "getDatasetList", "state": "US"}, timeout=60)
-    resp.raise_for_status()
-    listing = resp.json()
+    listing = legiscan_get({"key": api_key, "op": "getDatasetList", "state": "US"}, timeout=60).json()
     if listing.get("status") != "OK":
-        raise RuntimeError(f"getDatasetList failed: {listing}")
+        raise RuntimeError(f"getDatasetList failed: {redact(listing)}")
     ds = listing["datasetlist"][0]  # same choice as LegiScan1.ipynb
     dataset_date, dataset_hash = ds["dataset_date"], ds["dataset_hash"]
 
@@ -209,10 +219,9 @@ def download(store, api_key):
 
     listing["datasetlist"] = [{k: v for k, v in d.items() if k != "access_key"} for d in listing["datasetlist"]]
     store.write_json("legiscan", dataset_date, "getDatasetList.json", listing, "legiscan")
-    resp = requests.get(LEGISCAN_URL, params={
+    resp = legiscan_get({
         "key": api_key, "op": "getDatasetRaw", "id": ds["session_id"], "access_key": ds["access_key"],
     }, timeout=300)
-    resp.raise_for_status()
     rel = f"{store.folder('legiscan', dataset_date)}/getDatasetRaw{dataset_date}.zip"
     with open(store.root / rel, "xb") as f:
         f.write(resp.content)

@@ -32,6 +32,17 @@ def get_db(db_name=None):
     return client[db_name or os.getenv("MONGO_DB") or DEFAULT_DB]
 
 
+_SECRET_PARAM_RE = re.compile(r"(?<![\w])(key|access_key)=[^&\s'\"]+")
+
+
+def redact(text):
+    """Strip LegiScan secrets from a message: the key / access_key query
+    parameters requests puts in its error URLs, and the LEGI_API_KEY value."""
+    text = _SECRET_PARAM_RE.sub(r"\1=<redacted>", str(text))
+    api_key = os.getenv("LEGI_API_KEY")
+    return text.replace(api_key, "<redacted>") if api_key else text
+
+
 def raw_root():
     return Path(os.getenv("RAW_ROOT", "/uaspool/raw"))
 

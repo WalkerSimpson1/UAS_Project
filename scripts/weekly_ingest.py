@@ -34,7 +34,7 @@ from datetime import date, datetime, timezone
 
 import legiscan_loader
 import usaspending_loader
-from mongo_common import LEGACY_ZIP_DIR, get_db
+from mongo_common import LEGACY_ZIP_DIR, get_db, redact
 
 OK_STATUSES = {"ok", "skipped"}
 
@@ -65,8 +65,9 @@ def main():
     children, errors = {}, []
 
     def fail(name, e):
-        errors.append(f"{name}: {type(e).__name__}: {e}")
-        traceback.print_exc()
+        # Redacted: errors land in runs (and so in mongodump archives) and the log.
+        errors.append(redact(f"{name}: {type(e).__name__}: {e}"))
+        print(redact(traceback.format_exc()), file=sys.stderr)
 
     # The weekly loaders build on the migrated history; refuse to start without it.
     if not db.runs.find_one({"pipeline": "migration", "status": "ok"}):
@@ -87,7 +88,7 @@ def main():
                 db, today, args.backfill_method, not args.no_award_unique_id_test,
                 not args.no_coverage_pull, zfs_pre, run_tag)
             children["usaspending"] = {"run_doc": run.run_doc_id, "run_id": run.run_id, "status": status}
-            errors.extend(f"usaspending {e}" for e in run.errors)
+            errors.extend(redact(f"usaspending {e}") for e in run.errors)
             summary = {k: {x: y for x, y in v.items() if isinstance(y, (int, bool, str))}
                        for k, v in run.steps.items()}
             print(f"usaspending: {status} {summary}")
