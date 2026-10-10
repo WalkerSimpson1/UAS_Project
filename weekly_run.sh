@@ -58,10 +58,10 @@ TAG=""
 PRE_TAKEN=0
 ROLLBACK_ARMED=0
 REPO_BACKED_UP=0
-WARNINGS=()
 
 log()  { printf '%s %s\n' "$(date '+%F %T')" "$*"; }
-warn() { log "WARNING: $*"; WARNINGS+=("$*"); }
+# Steps run in subshells, so warnings are collected in a file ($WARN_FILE, set in main).
+warn() { log "WARNING: $*"; printf '%s\n' "$*" >> "$WARN_FILE"; }
 
 # Runs a state-changing command, or prints it under --dry-run.
 run() {
@@ -121,13 +121,40 @@ fail() {
   exit 1
 }
 
-trap 'fail "unexpected error at line $LINENO"' ERR
+ON_ERR='fail "unexpected error at line $LINENO"'
+trap "$ON_ERR" ERR
 trap 'fail "interrupted"' INT TERM
+
+# Runs "$@" in a subshell with errexit in force and sets STEP_RC. A function called
+# on the left of || (or under if/!) runs with set -e and the ERR trap disabled for its
+# whole body, so steps are never called that way. The parent's ERR trap is off while
+# the subshell runs so a failing step is handled once, by the caller.
+run_isolated() {
+  trap - ERR
+  set +e
+  (
+    set -e
+    trap 'log "error at line $LINENO: $BASH_COMMAND"' ERR
+    "$@"
+  )
+  STEP_RC=$?
+  set -e
+  trap "$ON_ERR" ERR
+}
 
 step() {
   local name=$1; shift
   log "== $name"
-  "$@" || fail "$name"
+  run_isolated "$@"
+  (( STEP_RC == 0 )) || fail "$name"
+}
+
+# For the steps after validation: report a failure, don't roll back.
+post_step() {
+  local name=$1; shift
+  log "== $name"
+  run_isolated "$@"
+  (( STEP_RC == 0 )) || { log "ERROR: $name failed"; post_ok=0; }
 }
 
 # ---------------------------------------------------------------- steps
@@ -258,17 +285,20 @@ run_notebook() {
 }
 
 # LegiScan2 loads the newest zip with a plain INSERT, so only run it when that
-# zip hasn't been loaded yet.
+# zip hasn't been loaded yet. Returns 0 run, 1 skip, 2 can't tell.
+# The caller tests the status, which turns errexit off in here: check every command.
 legiscan2_ready() {
   local newest loaded
-  newest=$(find "$REPO_DIR/legiscan_getDatasetRaw_data" -maxdepth 1 -name 'getDatasetRaw*.zip' -printf '%f\n' | sort | tail -n 1)
+  newest=$(find "$REPO_DIR/legiscan_getDatasetRaw_data" -maxdepth 1 -name 'getDatasetRaw*.zip' -printf '%f\n' | sort | tail -n 1) \
+    || { log "cannot list LegiScan zips"; return 2; }
+  [[ -n $newest ]] || { log "no LegiScan zip found"; return 2; }
   # Runs happen after the dataset date, so a load on or after it means this zip is in already.
   loaded=$("$PY" - "$REPO_DIR/UAS_Tracker.db" <<'EOF'
 import sqlite3, sys
 con = sqlite3.connect(sys.argv[1])
 print(con.execute("SELECT MAX(date_added) FROM legislation WHERE source_platform = 'LegiScan'").fetchone()[0] or "")
 EOF
-  )
+  ) || { log "cannot read latest LegiScan date_added from $REPO_DIR/UAS_Tracker.db"; return 2; }
   local zip_date=${newest#getDatasetRaw}; zip_date=${zip_date%.zip}
   if [[ -n $loaded && ! $loaded < $zip_date ]]; then
     warn "LegiScan2 skipped: $newest already loaded (latest date_added $loaded); LegiScan dataset may not have refreshed"
@@ -280,8 +310,11 @@ run_notebooks() {
   mkdir -p "$RUN_DIR/notebooks"
   local nb
   for nb in "${NOTEBOOKS[@]}"; do
-    if [[ $nb == LegiScan2 ]] && ! legiscan2_ready; then
-      continue
+    if [[ $nb == LegiScan2 ]]; then
+      local ready=0
+      legiscan2_ready || ready=$?
+      (( ready == 1 )) && continue
+      (( ready == 0 )) || return 1
     fi
     run_notebook "$nb" || return 1
   done
@@ -349,10 +382,12 @@ prune() {
   local -A month_first=()
   local date_re='([0-9]{4}-[0-9]{2}-[0-9]{2})(_[0-9]+)?'
 
+  local snaps
   for ds in "$MONGO_DATASET" "$RAW_DATASET"; do
+    snaps=$(zfs list -H -t snapshot -o name -d 1 "$ds") || return 1
     while read -r name; do
       [[ $name =~ @weekly-${date_re}-(pre|post)$ ]] && items+=("${BASH_REMATCH[1]} snap $name")
-    done < <(zfs list -H -t snapshot -o name -d 1 "$ds")
+    done <<<"$snaps"
   done
   for name in "$BACKUP_DIR"/uas_tracker_*.archive.gz; do
     [[ ${name##*/} =~ ^uas_tracker_${date_re}\.archive\.gz$ ]] && items+=("${BASH_REMATCH[1]} dump $name")
@@ -385,6 +420,7 @@ offsite_copy() {
 
 mkdir -p "$STATE_DIR/logs"
 LOG_FILE=$STATE_DIR/logs/run-$(date +%F_%H%M%S).log
+WARN_FILE=${LOG_FILE%.log}.warnings
 # systemd stop/timeout sends SIGTERM to the whole cgroup and Ctrl-C reaches the whole
 # process group; tee must outlive them so fail() can still log and roll back.
 exec > >(trap '' INT TERM; exec tee -a "$LOG_FILE") 2>&1
@@ -418,17 +454,17 @@ ROLLBACK_ARMED=0
 
 # Past this point the data is good; failures are reported but not rolled back.
 post_ok=1
-log "== snapshot $TAG-post"; snapshot post     || { log "ERROR: post snapshot failed"; post_ok=0; }
-log "== mongodump";          mongodump_archive || { log "ERROR: mongodump failed"; post_ok=0; }
-log "== prune";              prune             || { log "ERROR: prune failed"; post_ok=0; }
-log "== off-laptop copy";    offsite_copy      || { log "ERROR: off-laptop copy failed"; post_ok=0; }
+post_step "snapshot $TAG-post" snapshot post
+post_step "mongodump" mongodump_archive
+post_step "prune" prune
+post_step "off-laptop copy" offsite_copy
 trap - ERR INT TERM
 
 (( post_ok )) || { log "FAILED: backup steps (data kept, see above)"; log "log file: $LOG_FILE"; exit 1; }
 rm -f "$RUN_DIR/UAS_Tracker.db"  # only needed for rollback
-if (( ${#WARNINGS[@]} )); then
+if [[ -s $WARN_FILE ]]; then
   log "DONE with warnings:"
-  printf '  - %s\n' "${WARNINGS[@]}"
+  sed 's/^/  - /' "$WARN_FILE"
   log "log file: $LOG_FILE"
   exit 2
 fi
