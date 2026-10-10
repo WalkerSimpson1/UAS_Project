@@ -97,7 +97,11 @@ rollback() {
   else
     log "ROLLBACK: SQLite DB / CSV exports were not backed up yet; left as they are"
   fi
-  (( rc == 0 )) && log "ROLLBACK: done"
+  if (( rc == 0 )); then
+    log "ROLLBACK: done"
+    # Tells the next preflight this -pre snapshot without a -post was cleaned up.
+    mkdir -p "$STATE_DIR/resolved" && touch "$STATE_DIR/resolved/$TAG"
+  fi
   # Re-downloading would cost LegiScan API calls; the zip is harmless to keep.
   log "NOTE: LegiScan zips downloaded this run are kept; check: git -C $REPO_DIR status"
   return "$rc"
@@ -180,7 +184,43 @@ preflight() {
   if (( ok )); then
     mongo_counts >/dev/null || { log "cannot reach MongoDB at MONGO_URI"; ok=0; }
   fi
+  if (( ok )); then
+    local stale
+    if ! stale=$(unfinished_run); then
+      log "cannot check for an unfinished earlier run"; ok=0
+    elif [[ -n $stale ]]; then
+      log "earlier run $stale never finished: no -post snapshot, no successful weekly_ingest run, not rolled back"
+      log "roll it back with:"
+      log "  sudo systemctl stop $MONGOD_UNIT && zfs rollback $MONGO_DATASET@$stale-pre && zfs rollback $RAW_DATASET@$stale-pre && sudo systemctl start $MONGOD_UNIT"
+      log "  and copy UAS_Tracker.db + CSV exports back from $STATE_DIR/runs/$stale/ if they are there"
+      log "then (or if the data is fine as it is): touch $STATE_DIR/resolved/$stale"
+      ok=0
+    fi
+  fi
   (( ok )) || { (( DRY_RUN )) && { warn "preflight problems above (ignored for --dry-run)"; return 0; }; return 1; }
+}
+
+# Prints the tag of the newest run that took a -pre snapshot but never finished:
+# no -post snapshot, not rolled back, and no successful weekly_ingest run.
+# (SIGKILL, power loss or suspend mid-run skip all cleanup.)
+unfinished_run() {
+  local snaps pre tag
+  snaps=$(zfs list -H -t snapshot -o name -s creation -d 1 "$MONGO_DATASET") || return 1
+  pre=$(grep -E '@weekly-.*-pre$' <<<"$snaps" | tail -n 1 || true)
+  [[ -n $pre ]] || return 0
+  tag=${pre#*@}; tag=${tag%-pre}
+  snapshot_exists "$MONGO_DATASET@$tag-post" && return 0
+  [[ -e $STATE_DIR/resolved/$tag ]] && return 0
+  local ingest_ok
+  ingest_ok=$("$PY" - "$tag" <<'EOF'
+import os, sys
+from pymongo import MongoClient
+db = MongoClient(os.environ["MONGO_URI"], serverSelectionTimeoutMS=5000)[os.environ["MONGO_DB"]]
+print(db.runs.count_documents({"pipeline": "weekly_ingest", "run_id": sys.argv[1], "status": "ok"}))
+EOF
+  ) || return 1
+  (( ingest_ok > 0 )) && return 0
+  printf '%s' "$tag"
 }
 
 wait_for_network() {
