@@ -428,6 +428,14 @@ WARN_FILE=${LOG_FILE%.log}.warnings
 # systemd stop/timeout sends SIGTERM to the whole cgroup and Ctrl-C reaches the whole
 # process group; tee must outlive them so fail() can still log and roll back.
 exec > >(trap '' INT TERM; exec tee -a "$LOG_FILE") 2>&1
+TEE_PID=$!
+# When the main process exits, systemd kills what's left in the cgroup, tee included.
+# Close our end of the pipe and wait, so tee writes the last lines first.
+finish_log() {
+  exec >&- 2>&-
+  wait "$TEE_PID" 2>/dev/null || true
+}
+trap finish_log EXIT
 
 exec 9>"$STATE_DIR/lock"
 flock -n 9 || { log "another weekly run is in progress"; exit 1; }
