@@ -29,6 +29,10 @@ MONGOD_UNIT=mongod
 ZFS_PRUNE=/usr/local/sbin/uas-zfs-prune
 INGEST=$REPO_DIR/scripts/weekly_ingest.py
 
+# Repo-side state the notebooks change. Not on ZFS, so backed up per run and restored on rollback.
+SQLITE_DB=$REPO_DIR/UAS_Tracker.db
+CSV_EXPORTS=(Exported_SQL_Legislation_Table.csv Exported_SQL_Contracts_Table.csv)
+
 # Run order matches the manual weekly update. The one-time USASpending_Past_* loaders are not run.
 NOTEBOOKS=(LegiScan1 LegiScan2 USASpending1 USASpending2 USASpenging_Past_Visualizations)
 NOTEBOOK_TIMEOUT=1800
@@ -53,6 +57,7 @@ TODAY=$(date +%F)
 TAG=""
 PRE_TAKEN=0
 ROLLBACK_ARMED=0
+REPO_BACKED_UP=0
 WARNINGS=()
 
 log()  { printf '%s %s\n' "$(date '+%F %T')" "$*"; }
@@ -87,9 +92,14 @@ rollback() {
   run zfs rollback "$MONGO_DATASET@$snap" || { log "ROLLBACK ERROR: $MONGO_DATASET"; rc=1; }
   run zfs rollback "$RAW_DATASET@$snap"   || { log "ROLLBACK ERROR: $RAW_DATASET"; rc=1; }
   run sudo -n systemctl start "$MONGOD_UNIT" || { log "ROLLBACK ERROR: could not start $MONGOD_UNIT"; rc=1; }
+  if (( REPO_BACKED_UP )); then
+    restore_repo_files || { log "ROLLBACK ERROR: SQLite DB / CSV exports (backups in $RUN_DIR)"; rc=1; }
+  else
+    log "ROLLBACK: SQLite DB / CSV exports were not backed up yet; left as they are"
+  fi
   (( rc == 0 )) && log "ROLLBACK: done"
-  # The SQLite DB, CSV exports and LegiScan zip live in the repo, not on ZFS.
-  log "NOTE: repo files are not rolled back; check: git -C $REPO_DIR status"
+  # Re-downloading would cost LegiScan API calls; the zip is harmless to keep.
+  log "NOTE: LegiScan zips downloaded this run are kept; check: git -C $REPO_DIR status"
   return "$rc"
 }
 
@@ -117,6 +127,35 @@ step() {
 }
 
 # ---------------------------------------------------------------- steps
+
+# Copies a SQLite DB with the online backup API, which handles -journal/-wal state.
+sqlite_copy() {
+  "$PY" - "$1" "$2" <<'EOF'
+import sqlite3, sys
+src, dst = sqlite3.connect(sys.argv[1]), sqlite3.connect(sys.argv[2])
+src.backup(dst)
+src.close()
+dst.close()
+EOF
+}
+
+backup_repo_files() {
+  local f
+  run sqlite_copy "$SQLITE_DB" "$RUN_DIR/UAS_Tracker.db" || return 1
+  for f in "${CSV_EXPORTS[@]}"; do
+    run cp -p "$REPO_DIR/$f" "$RUN_DIR/$f" || return 1
+  done
+}
+
+restore_repo_files() {
+  local f rc=0
+  log "ROLLBACK: restoring $SQLITE_DB and CSV exports from $RUN_DIR"
+  run sqlite_copy "$RUN_DIR/UAS_Tracker.db" "$SQLITE_DB" || rc=1
+  for f in "${CSV_EXPORTS[@]}"; do
+    run cp -p "$RUN_DIR/$f" "$REPO_DIR/$f" || rc=1
+  done
+  return "$rc"
+}
 
 preflight() {
   local ok=1
@@ -329,6 +368,9 @@ step "snapshot $TAG-pre" snapshot pre
 PRE_TAKEN=1
 ROLLBACK_ARMED=$(( ! DRY_RUN ))
 
+step "back up SQLite DB and CSV exports" backup_repo_files
+REPO_BACKED_UP=$(( ! DRY_RUN ))
+
 step "SQLite notebooks" run_notebooks
 step "MongoDB ingest" run_ingest
 step "validate document counts" validate_counts
@@ -343,6 +385,7 @@ log "== off-laptop copy";    offsite_copy      || { log "ERROR: off-laptop copy 
 trap - ERR INT TERM
 
 (( post_ok )) || { log "FAILED: backup steps (data kept, see above)"; log "log file: $LOG_FILE"; exit 1; }
+rm -f "$RUN_DIR/UAS_Tracker.db"  # only needed for rollback
 if (( ${#WARNINGS[@]} )); then
   log "DONE with warnings:"
   printf '  - %s\n' "${WARNINGS[@]}"
