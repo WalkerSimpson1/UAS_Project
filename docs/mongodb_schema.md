@@ -155,7 +155,7 @@ Two kinds of document share this collection (D17). Tell them apart by `source`.
   significant: null,                 // true / false, or null when the API doesn't say (most notices)
   html_url: "...", pdf_url: "...",
   matched_keywords: ["unmanned aircraft"],  // every search phrase that has returned this document; only grows
-  first_seen: ISODate, last_seen: ISODate,  // UTC timestamps of the run
+  first_seen: ISODate, last_seen: ISODate,  // midnight of the run date (mongo_common.day()), so a same-day re-run is a no-op
   raw: { ... }                       // the full document object from the response, unmodified
 }
 ```

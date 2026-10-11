@@ -21,7 +21,7 @@ from datetime import date, datetime, timezone
 import requests
 from pymongo import UpdateOne
 
-from mongo_common import RawStore, bulk, days_ago, get_db
+from mongo_common import RawStore, bulk, day, days_ago, get_db
 from mongo_indexes import create_indexes
 
 API = "https://www.federalregister.gov/api/v1/documents.json"
@@ -168,12 +168,14 @@ def ingest(db, start=None, end=None, run_date=None, run_tag=None, session=None):
                 if phrase not in phrases:
                     phrases.append(phrase)
 
-        now = datetime.now(timezone.utc)
+        # Midnight of the run date, as elsewhere, so a same-day re-run leaves
+        # documents unchanged (mongo_common.day()).
+        seen = day(run_date)
         ops = [UpdateOne(
             {"_id": f"fr:{number}"},
-            {"$set": {**rulemaking_fields(d), "last_seen": now},
+            {"$set": {**rulemaking_fields(d), "last_seen": seen},
              "$addToSet": {"matched_keywords": {"$each": phrases}},
-             "$setOnInsert": {"first_seen": now}},
+             "$setOnInsert": {"first_seen": seen}},
             upsert=True) for number, (d, phrases) in matched.items()]
         counts = bulk(db.rulemakings, ops)
         doc.update({
