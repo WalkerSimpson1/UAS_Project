@@ -4,7 +4,8 @@
                                     [--no-award-unique-id-test] [--no-coverage-pull]
                                     [--backfill-method auto|award_unique_id|award_ids_exact]
 
-Runs legiscan_loader then usaspending_loader, each of which logs its own
+Runs legiscan_loader, usaspending_loader, then each rulemaking loader in
+RULEMAKING_LOADERS (federal_register_loader), each of which logs its own
 `runs` document, and writes one more `runs` document (pipeline
 "weekly_ingest") that ties them together.
 
@@ -20,8 +21,8 @@ check. After cut-over pass --legiscan-download.
 The section 9.1 award_unique_id test runs before the backfill unless
 --no-award-unique-id-test (the doc runs it every parallel-run week).
 
-Exit status: 0 when both pipelines finish ok (a skipped LegiScan dataset is
-ok), 1 otherwise. USASpending "partial" counts as a failure, so
+Exit status: 0 when every pipeline finishes ok (a skipped LegiScan dataset
+is ok), 1 otherwise. USASpending "partial" counts as a failure, so
 weekly_run.sh rolls the run back; re-running is safe because every write
 is an upsert.
 """
@@ -32,11 +33,37 @@ import sys
 import traceback
 from datetime import date, datetime, timezone
 
+import federal_register_loader
 import legiscan_loader
 import usaspending_loader
 from mongo_common import LEGACY_ZIP_DIR, get_db, redact
 
 OK_STATUSES = {"ok", "skipped"}
+
+# Rulemaking sources, run in this order by weekly_ingest and
+# backfill_rulemakings. Each loader's ingest(db, start=None, end=None,
+# run_date=None, run_tag=None) writes its own runs document and returns it
+# with run_id, status, window_start, window_end, requests, upserted and new.
+RULEMAKING_LOADERS = [
+    ("federal_register", federal_register_loader),
+    # >>> HOOK: regulations-api branch adds `import regulations_loader` above and this line:
+    # ("regulations_gov", regulations_loader),
+]
+RULEMAKING_SUMMARY = ("window_start", "window_end", "requests", "upserted", "new")
+
+
+def run_rulemakings(db, children, fail, run_tag, run_date=None, start=None, end=None):
+    """Run every RULEMAKING_LOADERS source; record each in children."""
+    for name, loader in RULEMAKING_LOADERS:
+        try:
+            run = loader.ingest(db, start, end, run_date=run_date, run_tag=run_tag)
+            children[name] = {"run_doc": run["_id"], "run_id": run["run_id"], "status": run["status"],
+                              **{k: run.get(k) for k in RULEMAKING_SUMMARY}}
+            print(f"{name}: {run['status']} {run['window_start']}..{run['window_end']} "
+                  f"requests={run['requests']} upserted={run['upserted']} new={run['new']}")
+        except Exception as e:
+            fail(name, e)
+            children[name] = {"status": "failed"}
 
 
 def main():
@@ -96,7 +123,10 @@ def main():
             fail("usaspending", e)
             children["usaspending"] = {"status": "failed"}
 
-    ok = not errors and all(c["status"] in OK_STATUSES for c in children.values()) and len(children) == 2
+        run_rulemakings(db, children, fail, run_tag, run_date=today)
+
+    # Without the migration no child runs, and errors is non-empty.
+    ok = not errors and all(c["status"] in OK_STATUSES for c in children.values())
     status = "ok" if ok else "failed"
     db.runs.update_one({"_id": parent_id}, {"$set": {
         "finished_at": datetime.now(timezone.utc),

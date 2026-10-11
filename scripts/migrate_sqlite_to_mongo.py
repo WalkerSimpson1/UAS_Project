@@ -289,9 +289,11 @@ def verify(db, conn):
         mongo_sum = res[0]["s"] if res else 0
         checks[f"SUM({table}.{col})"] = (abs(sql_sum - mongo_sum) < 0.01, round(sql_sum, 2), round(mongo_sum, 2))
 
-    for table in ("contracts_past", "contracts_past_transactions", "rulemakings"):
+    # rulemakings: SQLite only ever had hand rows; API documents carry a source (D17).
+    for table, match in (("contracts_past", {}), ("contracts_past_transactions", {}),
+                         ("rulemakings", {"source": None})):
         n_sql = q(f"SELECT COUNT(*) FROM {table}")[0][0]
-        n_mongo = db[table].count_documents({})
+        n_mongo = db[table].count_documents(match)
         checks[f"{table} count"] = (n_sql == n_mongo, n_sql, n_mongo)
 
     # Validation rule 4: every live award_key resolves. Expected to fail until

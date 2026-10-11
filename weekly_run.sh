@@ -37,7 +37,9 @@ CSV_EXPORTS=(Exported_SQL_Legislation_Table.csv Exported_SQL_Contracts_Table.csv
 NOTEBOOKS=(LegiScan1 LegiScan2 USASpending1 USASpending2 USASpenging_Past_Visualizations)
 NOTEBOOK_TIMEOUT=1800
 
-# Must be non-empty after ingest. Every collection is also checked for shrinking.
+# Must be non-empty after ingest. Every collection is also checked for shrinking,
+# including rulemakings and rulemaking_comments, which are deliberately not
+# required: a week with no matching documents or dockets leaves them empty.
 REQUIRED_COLLECTIONS=(legislation_history legislation contracts contract_transactions contracts_weekly_transactions_all runs)
 
 KEEP_WEEKLY_DAYS=84    # 12 weeks

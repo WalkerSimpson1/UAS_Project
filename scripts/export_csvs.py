@@ -9,7 +9,7 @@ Writes:
                                          same columns as USASpending1.ipynb
     Exported_Contract_Transactions.csv   contract_transactions (primary record)
     Exported_Legislation_Current.csv     legislation current view
-    Exported_Rulemakings.csv             rulemakings
+    Exported_Rulemakings.csv             rulemakings, hand-entered rows only (D17)
 
 --out-dir is required so a parallel-run export never overwrites the CSVs the
 SQLite notebooks write to the repo root. After cut-over, pass the repo root.
@@ -70,7 +70,8 @@ def export(db, out_dir):
     current = db.legislation.find({}, {"raw": 0}).sort([("bill_id", 1), ("date_added", 1), ("_id", 1)])
     written["Exported_Legislation_Current.csv"] = frame(current, CURRENT_COLUMNS)
 
-    rules = db.rulemakings.find({}).sort([("date_added", 1), ("identifier", 1), ("_id", 1)])
+    # Hand-entered rows only; API documents carry a source (D17).
+    rules = db.rulemakings.find({"source": None}).sort([("date_added", 1), ("identifier", 1), ("_id", 1)])
     written["Exported_Rulemakings.csv"] = frame(rules, RULEMAKING_COLUMNS)
 
     for name, df in written.items():
