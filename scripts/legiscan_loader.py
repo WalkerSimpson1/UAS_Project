@@ -173,7 +173,7 @@ def legiscan_zip_entries(store):
 
 
 def import_zip(store, zip_path):
-    """Copy a zip LegiScan1.ipynb downloaded into $RAW_ROOT/legiscan/<date>/.
+    """Copy a getDatasetRaw zip from elsewhere into $RAW_ROOT/legiscan/<date>/.
     Returns (relative path, dataset_date)."""
     m = ZIP_NAME_RE.search(str(zip_path))
     if not m:
