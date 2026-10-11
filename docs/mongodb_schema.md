@@ -1,6 +1,7 @@
 # MongoDB Schema Proposal
 
 Status: proposal only. No code has changed. The notebooks still write to `UAS_Tracker.db`.
+Revision 6 (2026-10-11). Adds D17: `rulemakings` takes API documents from the Federal Register (and later Regulations.gov) beside the hand-entered rows, and `rulemaking_comments` from Regulations.gov (sections 3.3, 3.3a, 4, 7, 8.4, 8.5).
 Revision 5 (2026-10-10). Adds D13–D16: an off-laptop backup that cut-over waits for (tentatively Azure Blob Storage), `uaspool/backups`, raw files outside the repo and out of git, and deferring the coverage-pull decision.
 
 ## 0. Decisions this revision is based on
@@ -23,6 +24,7 @@ Revision 5 (2026-10-10). Adds D13–D16: an off-laptop backup that cut-over wait
 | D14 | **Add dataset `uaspool/backups`** for `mongodump` archives | Section 6. |
 | D15 | **Raw files: `uaspool/raw` mounted at `/uaspool/raw`, outside the repo. `raw/` added to `.gitignore`.** Git handles large, growing files badly; ZFS snapshots and the off-laptop backup cover them | Section 7. Raw files are no longer committed. `raw_source` paths are relative to `RAW_ROOT`. Existing LegiScan zips move out of the repo. |
 | D16 | **Coverage pull (step 3b): decide after the parallel run** | Step 3b runs during both parallel weeks. Decision criteria are in section 9. |
+| D17 | **`rulemakings` holds API documents beside the hand-entered rows.** Federal Register documents get `_id: "fr:<document_number>"`, Regulations.gov documents `"rg:<documentId>"`. A rule can appear in both sources as two documents | Section 3.3. Hand rows have no `source` field, and `Exported_Rulemakings.csv` and the migration count check read only those. Comments go in `rulemaking_comments` with `_id: "rgc:<commentId>"` (3.3a). |
 
 Note: `docs/design_decisions.md` was referenced earlier but does not exist in the repo, on any branch, or in either worktree (`UAS_Project-automation`, `UAS_Project-migration`). The decisions above come from the requests that started each revision. If that file is written later, it should be checked against this table.
 
@@ -128,7 +130,61 @@ This is the current view used for tracking and the CSV export. It is derived fro
 
 ### 3.3 `rulemakings`
 
-Same tracker shape as `legislation`, plus `statutory_deadline: ISODate | null`. All rows are hand-entered, `_id` is an ObjectId, and `identifier` has a unique partial index. There are no snapshots, because there is no API feed.
+Two kinds of document share this collection (D17). Tell them apart by `source`.
+
+**Hand-entered rows** (no `source` field). Same tracker shape as `legislation`, plus `statutory_deadline: ISODate | null`. `_id` is an ObjectId, and `identifier` has a unique partial index. These are the only rows in `Exported_Rulemakings.csv` and the only rows the migration compares against SQLite (`find({source: null})`).
+
+**API documents** (`source` set), one per document per source, with no weekly snapshots. The prefix on `_id` names the source, so a rule published in the Federal Register and docketed on Regulations.gov is two documents. Join them on `docket_id`.
+
+```js
+// Federal Register (scripts/federal_register_loader.py)
+{
+  _id: "fr:2026-20531",              // "fr:" + document_number
+  source: "federal_register",
+  document_number: "2026-20531",
+  title: "...", abstract: "...",
+  document_type: "Notice",           // API `type`: display name ("Rule", "Proposed Rule", "Notice", "Presidential Document"), not the RULE/PRORULE search codes
+  publication_date: "2026-10-07",    // ISO date strings, as the API sends them; null when absent
+  effective_date: null,              // from the API field `effective_on` (the docs' `effective_date` is rejected as a field name)
+  comments_close_on: null,
+  agency_names: ["Justice Department"],
+  docket_id: "CPCLO Order No. 010-2026",   // docket_ids[0] or null
+  docket_ids: ["CPCLO Order No. 010-2026"],
+  rin: null,                         // regulation_id_numbers[0] or null
+  cfr_references: [],
+  significant: null,                 // true / false, or null when the API doesn't say (most notices)
+  html_url: "...", pdf_url: "...",
+  matched_keywords: ["unmanned aircraft"],  // every search phrase that has returned this document; only grows
+  first_seen: ISODate, last_seen: ISODate,  // UTC timestamps of the run
+  raw: { ... }                       // the full document object from the response, unmodified
+}
+```
+
+- **Date fields are ISO strings, not BSON Dates.** This is a deliberate exception to principle 5. Both APIs send strings, and each loader stores them exactly as sent. Federal Register dates are date-only (`"2026-10-07"`). Regulations.gov dates are UTC timestamps (`"2026-10-07T03:59:59Z"`, which is Oct 6 Eastern), so they are not truncated to a day. Strings from the two sources still sort together, but a date-only value and a UTC timestamp for the same day can differ by the Eastern offset. `first_seen` / `last_seen` are BSON Dates, as everywhere else.
+- **Weekly search:** one `GET /documents.json` per phrase (`unmanned aircraft`, `unmanned aerial`, `drone`, `counter-UAS`, `UAS`, `advanced air mobility`) over `publication_date` from 9 days back through today, `per_page=1000`, `order=newest`. The 2-day overlap with last week's window re-upserts the same `_id`s. Documents are de-duplicated by `document_number` across phrases.
+- **Multi-word phrases are sent in double quotes** (`"unmanned aircraft"`, `"unmanned aerial"`, `"advanced air mobility"`) for an exact-phrase match. Unquoted, the API matches documents that contain all the words anywhere: over 2026-07-01 to 2026-10-11, `advanced air mobility` returned 11 documents against 2 quoted, and `unmanned aircraft` 39 against 30. `drone`, `counter-UAS` and `UAS` are sent as-is (quoting `counter-UAS` returned the same 2 documents). `matched_keywords` stores the phrases without quotes. Single words still catch documents that mention drones only in passing, so an exclusion pass is expected later.
+- **Upsert:** `$set` the fields above and `last_seen`, `$addToSet` the run's matching phrases into `matched_keywords`, and `$setOnInsert` `first_seen`.
+- **Regulations.gov** (`rg:<documentId>`, `source: "regulations_gov"`, `scripts/regulations_loader.py`) fills the same common fields (`source`, `title`, `document_type`, `publication_date`, `comments_close_on`, `agency_names`, `docket_id`, `docket_ids`, `rin`, `first_seen`, `last_seen`, `raw`) from its own response. It chooses which dockets to load by reading Federal Register documents (`source: "federal_register"`) by `docket_id` and `last_seen`, which is what the `{ source: 1, last_seen: -1 }` index serves. It records the FR document number as `fr_document_number`. That loader's branch documents its exact mapping here.
+
+### 3.3a `rulemaking_comments`
+
+Public comments from the Regulations.gov API (`scripts/regulations_loader.py`), one document per comment. The Regulations.gov branch owns the full field list. The fields below are the ones the indexes (section 4) and other collections depend on:
+
+```js
+{
+  _id: "rgc:<commentId>",
+  source: "regulations_gov",
+  comment_on_id: "...",       // the commented-on document's attributes.objectId (not its documentId); /v4/comments filters on this
+  docket_id: "...",           // joins to rulemakings.docket_id
+  posted_date: "2026-10-07T03:59:59Z",  // the API's ISO string, UTC
+  detail_fetched_at: ISODate | unset,   // set once GET /v4/comments/{id} has been fetched
+  first_seen: ISODate, last_seen: ISODate,
+  raw: { ... }
+}
+```
+
+- **Two-stage load.** The `/v4/comments` list items have no organization, submitter name, comment text or `docketId`. Those come only from `GET /v4/comments/{id}`, one request per comment, and the API allows 1000 requests per hour. Each run fetches up to `--max-comment-details` (default 300) details, newest first. The rest keep `detail_fetched_at` unset and are fetched in later runs, using the `{ detail_fetched_at: 1, posted_date: -1 }` index. A comment still waiting for its details is not an error.
+- **Paging:** `meta.pageNumber` is 1-based and paging runs while `meta.hasNextPage` is true. The API stops at 20 pages × 250 results, and `runs` records `page_cap_hit` when a list reaches that limit.
 
 ### 3.4 Live contract data: transactions first, awards as lookup (D6)
 
@@ -275,6 +331,13 @@ Historical transactions are also primary relative to `contracts_past`. The 2 awa
 | `legislation` | `{ track: 1, event_date: -1 }` | Tracker views |
 | `legislation` | text index on `item_name`, `raw.description` | Keyword search |
 | `rulemakings` | `{ identifier: 1 }` unique, partial | No duplicate hand entries |
+| `rulemakings` | `{ source: 1, last_seen: -1 }` | Per-source views, "seen this run", and the Regulations.gov loader's docket input query. The `source` prefix also serves hand-row filters (`source: null`), so there is no separate `{ source: 1 }` index |
+| `rulemakings` | `{ docket_id: 1 }` | Join Federal Register to Regulations.gov documents and comments |
+| `rulemakings` | `{ publication_date: -1 }` | Newest documents, date-range reports |
+| `rulemakings` | `{ comments_close_on: 1 }` | Open comment periods |
+| `rulemaking_comments` | `{ comment_on_id: 1 }` | Comments on a document |
+| `rulemaking_comments` | `{ docket_id: 1 }` | Comments per docket |
+| `rulemaking_comments` | `{ detail_fetched_at: 1, posted_date: -1 }` | Comments still waiting for details (`detail_fetched_at` unset), newest first (3.3a) |
 | `contract_transactions` | `{ award_key: 1, action_date: 1 }` | Transactions per award; distinct `award_key`s for the backfill check |
 | `contract_transactions` | `{ action_date: -1 }` | Weekly and FY reporting on the primary record |
 | `contract_transactions` | `{ txn_key: 1 }` unique | Cross-source transaction join (section 5) |
@@ -481,6 +544,15 @@ Code finds the folder through `RAW_ROOT` in `.env`. Every `raw_source` and manif
       CONT_AWD_19GT5026P0853_1900_-NONE-_-NONE-.json
     award_unique_id_test/2026-10-11/ # parallel-run test, section 9.1
       case_1_award.json ...
+  federal_register/
+    2026-10-11/                      # run date; one file per search phrase per page (3.3)
+      unmanned_aircraft_p1.json
+      counter_uas_p1.json ...
+  regulations_gov/
+    2026-10-11/                      # run date (3.3, 3.3a)
+      <docket_id>_docs_p<n>.json     # documents in a docket
+      <object_id>_comments_p<n>.json # comment list for one document
+      <comment_id>_detail.json       # one comment's details
   manifest.jsonl                     # path (relative), sha256, source, endpoint, fetched_at, record_count, run_id
 ```
 
@@ -579,6 +651,7 @@ Write rules for `contracts` across steps 3 and 4:
 | `contract_transactions` | `_id: transaction_id` | `$set` API fields + `raw` + `last_seen`; `$setOnInsert` `first_seen`, `discovered_via` (first reason wins) |
 | `contracts_weekly_transactions_all` | `_id: {generated_internal_id, mod}` | same pattern |
 | `contracts_past*` | `_id` | one-time: `drop()` + `insert_many()` after the existing pandas dedup |
+| `rulemakings` (API documents) | `_id: "fr:" + document_number` (Regulations.gov: `"rg:" + documentId`) | `$set` fields + `raw` + `last_seen`; `$addToSet` `matched_keywords`; `$setOnInsert` `first_seen` |
 
 ### 8.5 Run log: `runs`
 
@@ -594,7 +667,25 @@ Write rules for `contracts` across steps 3 and 4:
     backfill:      { missing: 7, resolved_unique_id: 7, resolved_award_ids: 0, pending: 0, psc_not_1550: 0 },
     integrity:     { unresolved_award_keys: 0 }
   } }
+
+{ _id: ObjectId, run_id: "federal_register-2026-10-11", pipeline: "federal_register", run_tag,
+  started_at, finished_at, status: "ok" | "failed", raw_folder: "federal_register/2026-10-11",
+  window_start: "2026-10-02", window_end: "2026-10-11",   // publication_date window
+  requests: 6, upserted: 41, new: 3,                       // upserted = documents written, new = first seen this run
+  steps: { search: { documents_returned: 52,               // before de-duplication across phrases
+                     per_keyword: { "unmanned aircraft": 3, "drone": 4, ... },
+                     inserted: 3, modified: 38, unchanged: 0 } },
+  errors: [] }
+
+{ _id: ObjectId, pipeline: "regulations_gov", run_id, run_tag, started_at, finished_at,
+  status: "ok" | "partial",          // partial: one or more dockets failed; errors lists them
+  steps: { dockets, documents, comments,
+           comment_details: { fetched, modified, pending },   // pending = still waiting, not an error
+           requests, backoffs_429, page_cap_hit },
+  errors: [] }
 ```
+
+The `weekly_ingest` document copies `window_start`, `window_end`, `requests`, `upserted`, and `new` into `children.federal_register`. What it records for `regulations_gov`, and whether `"partial"` fails the weekly run, is settled when that loader's hook is added to `weekly_ingest.py`.
 
 ## 9. Two-week parallel run (D5)
 
@@ -663,7 +754,7 @@ Raw requests and responses are saved under `$RAW_ROOT/usaspending/award_unique_i
 **Coverage pull decision (D16), made at cut-over:** across all parallel-run weeks, look at `coverage_pull.new_txns_not_in_feed` in `runs`.
 - **Drop step 3b** if it is 0 every week. The 14-day feed is then catching everything the `last_modified_date` rule would.
 - **Keep it** if it is ever non-zero. Before deciding, check those transactions' `action_date`s: if they are all more than 14 days old, widening the lookback (D12) is an alternative to keeping 3b.
-- Record the decision in this doc as D17.
+- Record the decision in this doc as the next free D number (D17 is taken by `rulemakings`).
 
 ## 10. Remaining open questions
 

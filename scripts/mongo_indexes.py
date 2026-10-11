@@ -24,6 +24,15 @@ INDEXES = {
     ],
     "rulemakings": [
         ([("identifier", ASC)], {"unique": True, "partialFilterExpression": {"identifier": {"$type": "string"}}}),
+        ([("source", ASC), ("last_seen", DESC)], {}),
+        ([("docket_id", ASC)], {}),
+        ([("publication_date", DESC)], {}),
+        ([("comments_close_on", ASC)], {}),
+    ],
+    "rulemaking_comments": [
+        ([("comment_on_id", ASC)], {}),
+        ([("docket_id", ASC)], {}),
+        ([("detail_fetched_at", ASC), ("posted_date", DESC)], {}),  # pending comment details
     ],
     "contract_transactions": [
         ([("award_key", ASC), ("action_date", ASC)], {}),

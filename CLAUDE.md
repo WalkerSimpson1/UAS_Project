@@ -4,10 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-An ETL pipeline that tracks U.S. UAS (drone) policy and federal spending. It pulls data from the LegiScan API and USASpending.gov into two stores, which run side by side during a parallel run (`docs/mongodb_schema.md` section 9):
+An ETL pipeline that tracks U.S. UAS (drone) policy and federal spending. It pulls data from the LegiScan API, USASpending.gov, and the Federal Register API into two stores, which run side by side during a parallel run (`docs/mongodb_schema.md` section 9):
 
 - **SQLite** `UAS_Tracker.db`, written by the Jupyter notebooks in `notebooks/`. It stays the system of record until cut-over.
-- **MongoDB** (`uas_tracker` DB), written by the Python scripts in `scripts/`. It is the target design. `docs/mongodb_schema.md` is the spec (collections, indexes, decisions D1–D16) and the scripts cite its section numbers.
+- **MongoDB** (`uas_tracker` DB), written by the Python scripts in `scripts/`. It is the target design. `docs/mongodb_schema.md` is the spec (collections, indexes, decisions D1–D17) and the scripts cite its section numbers.
 
 There is no test suite or linter. Dependencies are pinned in `requirements.txt`, installed into `.venv/`.
 
@@ -26,7 +26,7 @@ There is no test suite or linter. Dependencies are pinned in `requirements.txt`,
 1. Preflight checks (venv, nbconvert, `.env`, ZFS datasets, mongod, sudo rules, an unfinished earlier run), then a wait for the network.
 2. An atomic ZFS snapshot `uaspool/mongo` + `uaspool/raw` `@weekly-<date>-pre`, plus a backup of `UAS_Tracker.db` and the CSV exports.
 3. The notebooks run through `jupyter nbconvert --execute`. The executed copies go to the run dir and `notebooks/` is not modified. The order is LegiScan1, LegiScan2, USASpending1, USASpending2, USASpenging_Past_Visualizations. LegiScan2 is skipped with a warning when the newest zip is already loaded, because it uses a plain `INSERT` and would duplicate rows.
-4. `scripts/weekly_ingest.py`, which runs `legiscan_loader` and then `usaspending_loader`. Each one logs to the `runs` collection.
+4. `scripts/weekly_ingest.py`, which runs `legiscan_loader`, `usaspending_loader`, and then the rulemaking loaders (`federal_register_loader`). Each one logs to the `runs` collection.
 5. Count validation: no collection may shrink, and the required collections must be non-empty.
 6. If any of steps 1–5 fails, the script stops mongod, rolls both datasets back to `-pre`, restores the SQLite DB and CSVs, and starts mongod. If they pass, it takes a `-post` snapshot, writes a `mongodump` to `/uaspool/backups`, and prunes snapshots and dumps (keeping 12 weekly and 12 monthly). The off-laptop copy (D13) is still a stub.
 
@@ -39,13 +39,15 @@ Exit codes: 0 means ok, 1 means failed, and 2 means completed with warnings (the
   - `weekly_ingest.py`: the weekly entry point.
   - `legiscan_loader.py` loads `legislation_history` (one snapshot per bill per week) and `legislation` (latest state).
   - `usaspending_loader.py`: transactions first (14-day lookback), then the award search, the coverage pull, the award backfill, and an integrity check (D6, D7).
+  - `federal_register_loader.py` searches six UAS keyword phrases over a 9-day `publication_date` window and upserts into `rulemakings` with `_id` `fr:<document_number>` (D17). `--start/--end` override the window.
+  - `backfill_rulemakings.py` runs the rulemaking loaders over a wider window (default 14 days). It runs outside `weekly_run.sh`, so it requires `uaspool/mongo` and `uaspool/raw` `@pre-rulemakings-backfill` snapshots to exist first.
   - `mongo_indexes.py`, `migrate_sqlite_to_mongo.py`, `load_contracts_past.py`: setup and one-time loads.
   - `export_csvs.py --out-dir DIR`: CSV exports from MongoDB. Until cut-over, point it at a directory other than the repo root so it does not overwrite the notebooks' CSVs.
 
 ## Data notes
 
 - Fiscal year: the FY starts Oct 1, and FY = calendar year + 1 for Oct–Dec.
-- `legislation` and `rulemakings` include rows entered by hand from congress.gov and Federal Register alerts. `rulemakings` is hand-entered only.
+- `legislation` and `rulemakings` include rows entered by hand from congress.gov and Federal Register alerts. In `rulemakings`, hand rows have no `source` field, and API documents have `source` and a prefixed `_id` (`fr:`, later `rg:` for Regulations.gov). `Exported_Rulemakings.csv` holds hand rows only.
 - The live-API `contracts*` tables and the bulk-CSV `contracts_past*` tables use different keys (`api_internal_id`/`award_key` vs `contract_award_unique_key`). See schema doc section 5 before joining them.
 
 ## Repo conventions
