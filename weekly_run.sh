@@ -3,7 +3,7 @@
 #
 #   1. ZFS snapshot uaspool/mongo + uaspool/raw   @weekly-<date>-pre
 #   2. SQLite notebooks (executed copies go to the log dir; notebooks/ is untouched)
-#   3. scripts/weekly_ingest.py                    (MongoDB pipeline)
+#   3. scripts/weekly_ingest.py                    (MongoDB pipeline; exit 2 = partial, a warning)
 #   4. Validate MongoDB document counts
 #   on failure in 1-4: stop mongod, roll back both datasets to -pre, start mongod
 #   on success:        -post snapshot, mongodump, prune (12 weekly / 12 monthly),
@@ -201,6 +201,8 @@ preflight() {
   "$VENV/bin/jupyter" nbconvert --version >/dev/null 2>&1 \
     || { log "jupyter nbconvert not available in $VENV (pip install nbconvert)"; ok=0; }
   [[ -f $REPO_DIR/.env ]] || { log "no $REPO_DIR/.env"; ok=0; }
+  # Checked for presence only; the value is never printed.
+  [[ -n $(env_value REGULATIONS_API_KEY) ]] || { log "REGULATIONS_API_KEY is not set in $REPO_DIR/.env"; ok=0; }
   [[ -f $INGEST ]] || { log "missing $INGEST"; ok=0; }
   for ds in "$MONGO_DATASET" "$RAW_DATASET"; do
     zfs list -H -o name "$ds" >/dev/null 2>&1 || { log "no ZFS dataset $ds"; ok=0; }
@@ -234,7 +236,8 @@ preflight() {
 }
 
 # Prints the tag of the newest run that took a -pre snapshot but never finished:
-# no -post snapshot, not rolled back, and no successful weekly_ingest run.
+# no -post snapshot, not rolled back, and no successful weekly_ingest run
+# ("ok", or "partial", which completed with warnings).
 # (SIGKILL, power loss or suspend mid-run skip all cleanup.)
 unfinished_run() {
   local snaps pre tag
@@ -249,7 +252,8 @@ unfinished_run() {
 import os, sys
 from pymongo import MongoClient
 db = MongoClient(os.environ["MONGO_URI"], serverSelectionTimeoutMS=5000)[os.environ["MONGO_DB"]]
-print(db.runs.count_documents({"pipeline": "weekly_ingest", "run_id": sys.argv[1], "status": "ok"}))
+print(db.runs.count_documents({"pipeline": "weekly_ingest", "run_id": sys.argv[1],
+                               "status": {"$in": ["ok", "partial"]}}))
 EOF
   ) || return 1
   (( ingest_ok > 0 )) && return 0
@@ -338,9 +342,17 @@ for name in sorted(db.list_collection_names()):
 EOF
 }
 
+# weekly_ingest.py exits 2 when only rulemaking loaders were partial (e.g. the
+# Regulations.gov rate limit): keep the data and finish with a warning.
 run_ingest() {
   mongo_counts > "$RUN_DIR/counts_before.txt" || return 1
-  (cd "$REPO_DIR" && UAS_RUN_TAG=$TAG UAS_ZFS_SNAPSHOT_PRE=$TAG-pre run "$PY" "$INGEST") || return 1
+  local rc=0
+  (cd "$REPO_DIR" && UAS_RUN_TAG=$TAG UAS_ZFS_SNAPSHOT_PRE=$TAG-pre run "$PY" "$INGEST") || rc=$?
+  if (( rc == 2 )); then
+    warn "MongoDB ingest partial: see the weekly_ingest runs document for $TAG"
+  elif (( rc != 0 )); then
+    return 1
+  fi
   mongo_counts > "$RUN_DIR/counts_after.txt" || return 1
 }
 

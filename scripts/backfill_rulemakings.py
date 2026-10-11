@@ -27,7 +27,7 @@ import traceback
 from datetime import date, datetime, timezone
 
 from mongo_common import days_ago, get_db, redact
-from weekly_ingest import OK_STATUSES, run_rulemakings
+from weekly_ingest import EXIT_CODES, outcome, run_rulemakings
 
 DATASETS = ("uaspool/mongo", "uaspool/raw")
 DEFAULT_SNAPSHOT = "pre-rulemakings-backfill"
@@ -87,8 +87,7 @@ def main():
 
     run_rulemakings(db, children, fail, run_tag, run_date=today, start=start, end=end)
 
-    ok = not errors and all(c["status"] in OK_STATUSES for c in children.values())
-    status = "ok" if ok else "failed"
+    status = outcome(errors, children)
     db.runs.update_one({"_id": parent_id}, {"$set": {
         "finished_at": datetime.now(timezone.utc),
         "status": status,
@@ -98,7 +97,7 @@ def main():
     print(f"backfill_rulemakings {start}..{end}: {status}")
     for e in errors:
         print(f"  {e}", file=sys.stderr)
-    return 0 if ok else 1
+    return EXIT_CODES[status]
 
 
 if __name__ == "__main__":
