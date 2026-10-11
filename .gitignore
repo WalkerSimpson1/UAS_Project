@@ -225,3 +225,6 @@ __marimo__/
 
 # Raw API files live on /uaspool/raw (ZFS), not in git
 raw/
+
+# LegiScan zips live on /uaspool/raw/legiscan/<date>/ (docs/mongodb_schema.md 6.3)
+legiscan_getDatasetRaw_data/
