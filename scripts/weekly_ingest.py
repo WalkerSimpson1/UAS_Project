@@ -5,7 +5,7 @@
                                     [--backfill-method auto|award_unique_id|award_ids_exact]
 
 Runs legiscan_loader, usaspending_loader, then each rulemaking loader in
-RULEMAKING_LOADERS (federal_register_loader), each of which logs its own
+RULEMAKING_LOADERS (federal_register_loader, regulations_loader), each of which logs its own
 `runs` document, and writes one more `runs` document (pipeline
 "weekly_ingest") that ties them together.
 
@@ -22,9 +22,11 @@ The section 9.1 award_unique_id test runs before the backfill unless
 --no-award-unique-id-test (the doc runs it every parallel-run week).
 
 Exit status: 0 when every pipeline finishes ok (a skipped LegiScan dataset
-is ok), 1 otherwise. USASpending "partial" counts as a failure, so
-weekly_run.sh rolls the run back; re-running is safe because every write
-is an upsert.
+is ok), 2 when the only problems are rulemaking loaders reporting "partial"
+(Regulations.gov rate limits make that normal; weekly_run.sh logs a warning
+and keeps the data), 1 otherwise. USASpending "partial" still counts as a
+failure, because its step errors go into `errors`, so weekly_run.sh rolls
+the run back; re-running is safe because every write is an upsert.
 """
 
 import argparse
@@ -35,10 +37,14 @@ from datetime import date, datetime, timezone
 
 import federal_register_loader
 import legiscan_loader
+import regulations_loader
 import usaspending_loader
 from mongo_common import LEGACY_ZIP_DIR, get_db, redact
 
 OK_STATUSES = {"ok", "skipped"}
+# A child with one of these statuses is a warning (exit 2), not a failure.
+# Only rulemaking loaders report them without adding to errors.
+WARN_STATUSES = {"partial"}
 
 # Rulemaking sources, run in this order by weekly_ingest and
 # backfill_rulemakings. Each loader's ingest(db, start=None, end=None,
@@ -46,10 +52,20 @@ OK_STATUSES = {"ok", "skipped"}
 # with run_id, status, window_start, window_end, requests, upserted and new.
 RULEMAKING_LOADERS = [
     ("federal_register", federal_register_loader),
-    # >>> HOOK: regulations-api branch adds `import regulations_loader` above and this line:
-    # ("regulations_gov", regulations_loader),
+    ("regulations_gov", regulations_loader),
 ]
 RULEMAKING_SUMMARY = ("window_start", "window_end", "requests", "upserted", "new")
+
+
+def outcome(errors, children):
+    """"ok", "partial" (warnings only) or "failed" for a parent runs document."""
+    statuses = {c["status"] for c in children.values()}
+    if errors or statuses - OK_STATUSES - WARN_STATUSES:
+        return "failed"
+    return "partial" if statuses & WARN_STATUSES else "ok"
+
+
+EXIT_CODES = {"ok": 0, "partial": 2, "failed": 1}
 
 
 def run_rulemakings(db, children, fail, run_tag, run_date=None, start=None, end=None):
@@ -126,8 +142,7 @@ def main():
         run_rulemakings(db, children, fail, run_tag, run_date=today)
 
     # Without the migration no child runs, and errors is non-empty.
-    ok = not errors and all(c["status"] in OK_STATUSES for c in children.values())
-    status = "ok" if ok else "failed"
+    status = outcome(errors, children)
     db.runs.update_one({"_id": parent_id}, {"$set": {
         "finished_at": datetime.now(timezone.utc),
         "status": status,
@@ -137,7 +152,7 @@ def main():
     print(f"weekly_ingest {run_tag}: {status}")
     for e in errors:
         print(f"  {e}", file=sys.stderr)
-    return 0 if ok else 1
+    return EXIT_CODES[status]
 
 
 if __name__ == "__main__":

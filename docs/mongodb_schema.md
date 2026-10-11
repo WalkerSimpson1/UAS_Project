@@ -1,6 +1,7 @@
 # MongoDB Schema Proposal
 
 Status: proposal only. No code has changed. The notebooks still write to `UAS_Tracker.db`.
+Revision 7 (2026-10-11). Regulations.gov loader: field mappings in 3.3 and 3.3a, its `runs` document in 8.5, and a rulemaking loader's `"partial"` is a warning for the weekly run (8.5).
 Revision 6 (2026-10-11). Adds D17: `rulemakings` takes API documents from the Federal Register (and later Regulations.gov) beside the hand-entered rows, and `rulemaking_comments` from Regulations.gov (sections 3.3, 3.3a, 4, 7, 8.4, 8.5).
 Revision 5 (2026-10-10). Adds D13–D16: an off-laptop backup that cut-over waits for (tentatively Azure Blob Storage), `uaspool/backups`, raw files outside the repo and out of git, and deferring the coverage-pull decision.
 
@@ -164,22 +165,53 @@ Two kinds of document share this collection (D17). Tell them apart by `source`.
 - **Weekly search:** one `GET /documents.json` per phrase (`unmanned aircraft`, `unmanned aerial`, `drone`, `counter-UAS`, `UAS`, `advanced air mobility`) over `publication_date` from 9 days back through today, `per_page=1000`, `order=newest`. The 2-day overlap with last week's window re-upserts the same `_id`s. Documents are de-duplicated by `document_number` across phrases.
 - **Multi-word phrases are sent in double quotes** (`"unmanned aircraft"`, `"unmanned aerial"`, `"advanced air mobility"`) for an exact-phrase match. Unquoted, the API matches documents that contain all the words anywhere: over 2026-07-01 to 2026-10-11, `advanced air mobility` returned 11 documents against 2 quoted, and `unmanned aircraft` 39 against 30. `drone`, `counter-UAS` and `UAS` are sent as-is (quoting `counter-UAS` returned the same 2 documents). `matched_keywords` stores the phrases without quotes. Single words still catch documents that mention drones only in passing, so an exclusion pass is expected later.
 - **Upsert:** `$set` the fields above and `last_seen`, `$addToSet` the run's matching phrases into `matched_keywords`, and `$setOnInsert` `first_seen`.
-- **Regulations.gov** (`rg:<documentId>`, `source: "regulations_gov"`, `scripts/regulations_loader.py`) fills the same common fields (`source`, `title`, `document_type`, `publication_date`, `comments_close_on`, `agency_names`, `docket_id`, `docket_ids`, `rin`, `first_seen`, `last_seen`, `raw`) from its own response. It chooses which dockets to load by reading Federal Register documents (`source: "federal_register"`) by `docket_id` and `last_seen`, which is what the `{ source: 1, last_seen: -1 }` index serves. It records the FR document number as `fr_document_number`. That loader's branch documents its exact mapping here.
-
-### 3.3a `rulemaking_comments`
-
-Public comments from the Regulations.gov API (`scripts/regulations_loader.py`), one document per comment. The Regulations.gov branch owns the full field list. The fields below are the ones the indexes (section 4) and other collections depend on:
+- **Regulations.gov** (`rg:<documentId>`, `source: "regulations_gov"`, `scripts/regulations_loader.py`) fills the same common fields from its own response. It chooses which dockets to load by reading Federal Register documents (`source: "federal_register"`) by `last_seen` (the run date) and `publication_date` (the Federal Register loader's window), which is what the `{ source: 1, last_seen: -1 }` index serves. A weekly run therefore follows exactly the documents the Federal Register loader just upserted. Mapping from one `/v4/documents` list item:
 
 ```js
 {
-  _id: "rgc:<commentId>",
+  _id: "rg:FAA-2026-9077-0003",      // "rg:" + documentId (the item's id)
   source: "regulations_gov",
-  comment_on_id: "...",       // the commented-on document's attributes.objectId (not its documentId); /v4/comments filters on this
-  docket_id: "...",           // joins to rulemakings.docket_id
-  posted_date: "2026-10-07T03:59:59Z",  // the API's ISO string, UTC
-  detail_fetched_at: ISODate | unset,   // set once GET /v4/comments/{id} has been fetched
+  document_id: "FAA-2026-9077-0003",
+  object_id: "09000064b956b741",     // attributes.objectId: what /v4/comments filters on
+  title: "...",
+  document_type: "Notice",           // attributes.documentType ("Rule", "Proposed Rule", "Notice", "Other", ...)
+  publication_date: "2026-09-16T04:00:00Z",   // attributes.postedDate
+  comment_start_date: "2026-09-16T04:00:00Z", // attributes.commentStartDate
+  comments_close_on: "2026-10-07T03:59:59Z",  // attributes.commentEndDate
+  open_for_comment: false,           // attributes.openForComment
+  agency_id: "FAA",
+  agency_names: ["FAA"],             // the list has only the acronym, not the FR's full agency name
+  docket_id: "FAA-2026-9077", docket_ids: ["FAA-2026-9077"],
+  rin: null,                         // not in the list response
+  fr_document_number: "2026-18984",  // the FR document whose docket led here: the one matching
+                                     // attributes.frDocNum, else the only FR document on that docket, else null
   first_seen: ISODate, last_seen: ISODate,
-  raw: { ... }
+  raw: { ... }                       // the list item, unmodified
+}
+```
+
+### 3.3a `rulemaking_comments`
+
+Public comments from the Regulations.gov API (`scripts/regulations_loader.py`), one document per comment. Comments are kept out of `rulemakings` so that collection stays one document per regulatory action, and so the weekly count check can tell one new rule from one rule plus 40,000 comments.
+
+```js
+{
+  _id: "rgc:FAA-2026-9077-0004",       // "rgc:" + commentId
+  source: "regulations_gov",
+  comment_id: "FAA-2026-9077-0004",
+  comment_on_id: "09000064b956b741",   // the commented-on document's attributes.objectId (not its documentId); /v4/comments filters on this
+  docket_id: "FAA-2026-9077",          // from the commented-on document (the list item has no docketId); joins to rulemakings.docket_id
+  agency_id: "FAA",
+  title: "Comment from ...",
+  posted_date: "2026-10-07T04:00:00Z", // the API's ISO string, UTC
+  // From GET /v4/comments/{id}, once fetched:
+  organization: "...",                 // null for individuals
+  submitter_name: null,                // firstName + lastName, null when neither is public
+  comment_text: "See attached file(s)",  // may be truncated by the API for long submissions; a short value is not an error
+  raw_detail: { ... },                 // the detail response's data object
+  detail_fetched_at: ISODate | unset,  // set once the details have been fetched
+  first_seen: ISODate, last_seen: ISODate,
+  raw: { ... }                         // the list item, unmodified
 }
 ```
 
@@ -651,7 +683,8 @@ Write rules for `contracts` across steps 3 and 4:
 | `contract_transactions` | `_id: transaction_id` | `$set` API fields + `raw` + `last_seen`; `$setOnInsert` `first_seen`, `discovered_via` (first reason wins) |
 | `contracts_weekly_transactions_all` | `_id: {generated_internal_id, mod}` | same pattern |
 | `contracts_past*` | `_id` | one-time: `drop()` + `insert_many()` after the existing pandas dedup |
-| `rulemakings` (API documents) | `_id: "fr:" + document_number` (Regulations.gov: `"rg:" + documentId`) | `$set` fields + `raw` + `last_seen`; `$addToSet` `matched_keywords`; `$setOnInsert` `first_seen` |
+| `rulemakings` (API documents) | `_id: "fr:" + document_number` (Regulations.gov: `"rg:" + documentId`) | `$set` fields + `raw` + `last_seen`; `$addToSet` `matched_keywords` (Federal Register only); `$setOnInsert` `first_seen` |
+| `rulemaking_comments` | `_id: "rgc:" + commentId` | `$set` list fields + `raw` + `last_seen`; `$setOnInsert` `first_seen`. The detail fetch later `$set`s the detail fields and `detail_fetched_at` |
 
 ### 8.5 Run log: `runs`
 
@@ -677,15 +710,24 @@ Write rules for `contracts` across steps 3 and 4:
                      inserted: 3, modified: 38, unchanged: 0 } },
   errors: [] }
 
-{ _id: ObjectId, pipeline: "regulations_gov", run_id, run_tag, started_at, finished_at,
-  status: "ok" | "partial",          // partial: one or more dockets failed; errors lists them
-  steps: { dockets, documents, comments,
-           comment_details: { fetched, modified, pending },   // pending = still waiting, not an error
-           requests, backoffs_429, page_cap_hit },
+{ _id: ObjectId, run_id: "regulations_gov-2026-10-11", pipeline: "regulations_gov", run_tag,
+  started_at, finished_at, raw_folder: "regulations_gov/2026-10-11",
+  status: "ok" | "partial" | "failed",
+  // partial: a docket failed (e.g. 429 retries ran out; errors lists it), or comment-detail
+  //          fetches stopped because X-Ratelimit-Remaining ran low. A warning, not a failure.
+  // failed:  the run itself crashed (the exception is re-raised).
+  window_start: "2026-10-02", window_end: "2026-10-11",   // FR publication_date window; null with --docket
+  docket: null,                                            // set when run with --docket
+  requests: 5, upserted: 4, new: 4,   // upserted / new count documents and comments together
+  steps: { dockets: { processed, docket_ids },
+           documents: { inserted, modified, unchanged },
+           comments:  { inserted, modified, unchanged },
+           comment_details: { fetched, modified, pending, stopped_on_rate_budget },  // pending alone is not an error
+           requests, backoffs_429: { count, wait_s, events }, page_cap_hit: [] },
   errors: [] }
 ```
 
-The `weekly_ingest` document copies `window_start`, `window_end`, `requests`, `upserted`, and `new` into `children.federal_register`. What it records for `regulations_gov`, and whether `"partial"` fails the weekly run, is settled when that loader's hook is added to `weekly_ingest.py`.
+The `weekly_ingest` document copies `window_start`, `window_end`, `requests`, `upserted`, and `new` into `children.federal_register` and `children.regulations_gov`. A rulemaking loader's `"partial"` is a warning: the `weekly_ingest` document gets status `"partial"` and exits 2, and `weekly_run.sh` keeps the data and finishes with a warning (exit 2) instead of rolling back. Any `"failed"` child, and USASpending's `"partial"` (its step errors go into `errors`), still fail the run. `backfill_rulemakings.py` uses the same rule.
 
 ## 9. Two-week parallel run (D5)
 
