@@ -1,4 +1,4 @@
-"""Weekly MongoDB ingest, called by weekly_run.sh after the SQLite notebooks.
+"""Weekly MongoDB ingest, called by weekly_run.sh.
 
     python scripts/weekly_ingest.py [--db NAME] [--legiscan-download]
                                     [--no-award-unique-id-test] [--no-coverage-pull]
@@ -13,10 +13,10 @@ Environment (set by weekly_run.sh; both optional for a manual run):
     UAS_RUN_TAG           run tag, e.g. weekly-2026-10-11 (default: manual-<timestamp>)
     UAS_ZFS_SNAPSHOT_PRE  name of the -pre ZFS snapshot, recorded in runs
 
-LegiScan, parallel run (default): load the newest zip in
-legiscan_getDatasetRaw_data/, the same one LegiScan2.ipynb reads. A dataset
-an earlier run already loaded is skipped, matching weekly_run.sh's LegiScan2
-check. After cut-over pass --legiscan-download.
+LegiScan: weekly_run.sh passes --legiscan-download (since cut-over). Without
+it, the newest zip in the legacy legiscan_getDatasetRaw_data/ is loaded, which
+no longer exists after cut-over (the zips are on $RAW_ROOT/legiscan/). A
+dataset an earlier run already loaded is skipped.
 
 The section 9.1 award_unique_id test runs before the backfill unless
 --no-award-unique-id-test (the doc runs it every parallel-run week).
