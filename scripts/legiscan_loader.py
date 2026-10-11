@@ -1,15 +1,15 @@
 """Weekly LegiScan load into legislation_history + legislation
 (docs/mongodb_schema.md sections 3.1, 3.2, 8.1).
 
-Parallel run: load the same zip LegiScan1.ipynb downloaded for SQLite. The zip
-is copied into $RAW_ROOT/legiscan/<dataset_date>/ (write-once) and loaded:
-
-    python scripts/legiscan_loader.py --zip legiscan_getDatasetRaw_data/getDatasetRaw2026-10-11.zip
-
-After cut-over: call getDatasetList, and call getDatasetRaw only when the
-dataset_hash isn't already in manifest.jsonl (LegiScan requires this):
+Weekly (since cut-over): call getDatasetList, and call getDatasetRaw only when
+the dataset_hash isn't already in manifest.jsonl (LegiScan requires this):
 
     python scripts/legiscan_loader.py --download
+
+A zip from elsewhere is copied into $RAW_ROOT/legiscan/<dataset_date>/
+(write-once) and loaded:
+
+    python scripts/legiscan_loader.py --zip path/to/getDatasetRaw2026-10-11.zip
 
 Re-running on the same day changes nothing: snapshots are keyed on
 (bill_id, snapshot_date) and written with $setOnInsert. A dataset an earlier
@@ -173,7 +173,7 @@ def legiscan_zip_entries(store):
 
 
 def import_zip(store, zip_path):
-    """Copy a zip LegiScan1.ipynb downloaded into $RAW_ROOT/legiscan/<date>/.
+    """Copy a getDatasetRaw zip from elsewhere into $RAW_ROOT/legiscan/<date>/.
     Returns (relative path, dataset_date)."""
     m = ZIP_NAME_RE.search(str(zip_path))
     if not m:

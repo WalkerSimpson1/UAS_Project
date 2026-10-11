@@ -2,12 +2,14 @@
 # Weekly UAS Tracker run (docs/mongodb_schema.md sections 6.1, 8, 9).
 #
 #   1. ZFS snapshot uaspool/mongo + uaspool/raw   @weekly-<date>-pre
-#   2. SQLite notebooks (executed copies go to the log dir; notebooks/ is untouched)
-#   3. scripts/weekly_ingest.py                    (MongoDB pipeline; exit 2 = partial, a warning)
-#   4. Validate MongoDB document counts
-#   on failure in 1-4: stop mongod, roll back both datasets to -pre, start mongod
-#   on success:        -post snapshot, mongodump, prune (12 weekly / 12 monthly),
-#                      off-laptop copy (stub until D13 is decided)
+#   2. scripts/weekly_ingest.py --legiscan-download (exit 2 = partial, a warning)
+#   3. Validate MongoDB document counts
+#   on failure in 1-3: stop mongod, roll back both datasets to -pre, start mongod
+#   on success:        -post snapshot, CSV exports to the repo root, mongodump,
+#                      prune (12 weekly / 12 monthly), off-laptop copy (stub, D13)
+#
+# Since cut-over (section 9) MongoDB is the system of record; the SQLite
+# notebooks are no longer run.
 #
 # Exit status: 0 ok, 1 failed (rolled back if past step 1), 2 completed with warnings.
 # Usage: weekly_run.sh [--dry-run]
@@ -28,14 +30,7 @@ MONGOD_UNIT=mongod
 # Root-owned, sudo-allowed; destroys only @weekly-* snapshots (systemd/uas-zfs-prune).
 ZFS_PRUNE=/usr/local/sbin/uas-zfs-prune
 INGEST=$REPO_DIR/scripts/weekly_ingest.py
-
-# Repo-side state the notebooks change. Not on ZFS, so backed up per run and restored on rollback.
-SQLITE_DB=$REPO_DIR/UAS_Tracker.db
-CSV_EXPORTS=(Exported_SQL_Legislation_Table.csv Exported_SQL_Contracts_Table.csv)
-
-# Run order matches the manual weekly update. The one-time USASpending_Past_* loaders are not run.
-NOTEBOOKS=(LegiScan1 LegiScan2 USASpending1 USASpending2 USASpenging_Past_Visualizations)
-NOTEBOOK_TIMEOUT=1800
+EXPORT=$REPO_DIR/scripts/export_csvs.py
 
 # Must be non-empty after ingest. Every collection is also checked for shrinking,
 # including rulemakings and rulemaking_comments, which are deliberately not
@@ -50,7 +45,7 @@ PATH=/usr/sbin:/sbin:$PATH
 DRY_RUN=0
 case ${1:-} in
   --dry-run) DRY_RUN=1 ;;
-  -h|--help) sed -n '2,17p' "$0"; exit 0 ;;
+  -h|--help) sed -n '2,19p' "$0"; exit 0 ;;
   "") ;;
   *) echo "unknown option: $1" >&2; exit 1 ;;
 esac
@@ -59,7 +54,6 @@ TODAY=$(date +%F)
 TAG=""
 PRE_TAKEN=0
 ROLLBACK_ARMED=0
-REPO_BACKED_UP=0
 
 log()  { printf '%s %s\n' "$(date '+%F %T')" "$*"; }
 # Steps run in subshells, so warnings are collected in a file ($WARN_FILE, set in main).
@@ -95,18 +89,13 @@ rollback() {
   run zfs rollback "$MONGO_DATASET@$snap" || { log "ROLLBACK ERROR: $MONGO_DATASET"; rc=1; }
   run zfs rollback "$RAW_DATASET@$snap"   || { log "ROLLBACK ERROR: $RAW_DATASET"; rc=1; }
   run sudo -n systemctl start "$MONGOD_UNIT" || { log "ROLLBACK ERROR: could not start $MONGOD_UNIT"; rc=1; }
-  if (( REPO_BACKED_UP )); then
-    restore_repo_files || { log "ROLLBACK ERROR: SQLite DB / CSV exports (backups in $RUN_DIR)"; rc=1; }
-  else
-    log "ROLLBACK: SQLite DB / CSV exports were not backed up yet; left as they are"
-  fi
   if (( rc == 0 )); then
     log "ROLLBACK: done"
     # Tells the next preflight this -pre snapshot without a -post was cleaned up.
     mkdir -p "$STATE_DIR/resolved" && touch "$STATE_DIR/resolved/$TAG"
   fi
-  # Re-downloading would cost LegiScan API calls; the zip is harmless to keep.
-  log "NOTE: LegiScan zips downloaded this run are kept; check: git -C $REPO_DIR status"
+  # The rollback of uaspool/raw also removes any LegiScan zip downloaded this run;
+  # the next run downloads it again.
   return "$rc"
 }
 
@@ -165,45 +154,14 @@ post_step() {
 
 # ---------------------------------------------------------------- steps
 
-# Copies a SQLite DB with the online backup API, which handles -journal/-wal state.
-sqlite_copy() {
-  "$PY" - "$1" "$2" <<'EOF'
-import sqlite3, sys
-src, dst = sqlite3.connect(sys.argv[1]), sqlite3.connect(sys.argv[2])
-src.backup(dst)
-src.close()
-dst.close()
-EOF
-}
-
-backup_repo_files() {
-  local f
-  run sqlite_copy "$SQLITE_DB" "$RUN_DIR/UAS_Tracker.db" || return 1
-  for f in "${CSV_EXPORTS[@]}"; do
-    run cp -p "$REPO_DIR/$f" "$RUN_DIR/$f" || return 1
-  done
-}
-
-restore_repo_files() {
-  local f rc=0
-  log "ROLLBACK: restoring $SQLITE_DB and CSV exports from $RUN_DIR"
-  run sqlite_copy "$RUN_DIR/UAS_Tracker.db" "$SQLITE_DB" || rc=1
-  for f in "${CSV_EXPORTS[@]}"; do
-    run cp -p "$RUN_DIR/$f" "$REPO_DIR/$f" || rc=1
-  done
-  return "$rc"
-}
-
 preflight() {
   local ok=1
   [[ -x $PY ]] || { log "no python at $PY (set UAS_VENV)"; ok=0; }
-  # The jupyter launcher exists without nbconvert; check the subcommand actually runs.
-  "$VENV/bin/jupyter" nbconvert --version >/dev/null 2>&1 \
-    || { log "jupyter nbconvert not available in $VENV (pip install nbconvert)"; ok=0; }
   [[ -f $REPO_DIR/.env ]] || { log "no $REPO_DIR/.env"; ok=0; }
   # Checked for presence only; the value is never printed.
   [[ -n $(env_value REGULATIONS_API_KEY) ]] || { log "REGULATIONS_API_KEY is not set in $REPO_DIR/.env"; ok=0; }
   [[ -f $INGEST ]] || { log "missing $INGEST"; ok=0; }
+  [[ -f $EXPORT ]] || { log "missing $EXPORT"; ok=0; }
   for ds in "$MONGO_DATASET" "$RAW_DATASET"; do
     zfs list -H -o name "$ds" >/dev/null 2>&1 || { log "no ZFS dataset $ds"; ok=0; }
   done
@@ -227,7 +185,6 @@ preflight() {
       log "earlier run $stale never finished: no -post snapshot, no successful weekly_ingest run, not rolled back"
       log "roll it back with:"
       log "  sudo systemctl stop $MONGOD_UNIT && zfs rollback $MONGO_DATASET@$stale-pre && zfs rollback $RAW_DATASET@$stale-pre && sudo systemctl start $MONGOD_UNIT"
-      log "  and copy UAS_Tracker.db + CSV exports back from $STATE_DIR/runs/$stale/ if they are there"
       log "then (or if the data is fine as it is): touch $STATE_DIR/resolved/$stale"
       ok=0
     fi
@@ -286,50 +243,6 @@ snapshot() {
   run zfs snapshot "$MONGO_DATASET@$TAG-$1" "$RAW_DATASET@$TAG-$1"
 }
 
-run_notebook() {
-  log "notebook: $1"
-  run "$VENV/bin/jupyter" nbconvert --to notebook --execute \
-    --ExecutePreprocessor.timeout="$NOTEBOOK_TIMEOUT" \
-    --output-dir "$RUN_DIR/notebooks" --output "$1" \
-    "$REPO_DIR/notebooks/$1.ipynb"
-}
-
-# LegiScan2 loads the newest zip with a plain INSERT, so only run it when that
-# zip hasn't been loaded yet. Returns 0 run, 1 skip, 2 can't tell.
-# The caller tests the status, which turns errexit off in here: check every command.
-legiscan2_ready() {
-  local newest loaded
-  newest=$(find "$REPO_DIR/legiscan_getDatasetRaw_data" -maxdepth 1 -name 'getDatasetRaw*.zip' -printf '%f\n' | sort | tail -n 1) \
-    || { log "cannot list LegiScan zips"; return 2; }
-  [[ -n $newest ]] || { log "no LegiScan zip found"; return 2; }
-  # Runs happen after the dataset date, so a load on or after it means this zip is in already.
-  loaded=$("$PY" - "$REPO_DIR/UAS_Tracker.db" <<'EOF'
-import sqlite3, sys
-con = sqlite3.connect(sys.argv[1])
-print(con.execute("SELECT MAX(date_added) FROM legislation WHERE source_platform = 'LegiScan'").fetchone()[0] or "")
-EOF
-  ) || { log "cannot read latest LegiScan date_added from $REPO_DIR/UAS_Tracker.db"; return 2; }
-  local zip_date=${newest#getDatasetRaw}; zip_date=${zip_date%.zip}
-  if [[ -n $loaded && ! $loaded < $zip_date ]]; then
-    warn "LegiScan2 skipped: $newest already loaded (latest date_added $loaded); LegiScan dataset may not have refreshed"
-    return 1
-  fi
-}
-
-run_notebooks() {
-  mkdir -p "$RUN_DIR/notebooks"
-  local nb
-  for nb in "${NOTEBOOKS[@]}"; do
-    if [[ $nb == LegiScan2 ]]; then
-      local ready=0
-      legiscan2_ready || ready=$?
-      (( ready == 1 )) && continue
-      (( ready == 0 )) || return 1
-    fi
-    run_notebook "$nb" || return 1
-  done
-}
-
 # Prints "<collection> <count>" for every collection in the DB.
 mongo_counts() {
   "$PY" - <<'EOF'
@@ -347,7 +260,7 @@ EOF
 run_ingest() {
   mongo_counts > "$RUN_DIR/counts_before.txt" || return 1
   local rc=0
-  (cd "$REPO_DIR" && UAS_RUN_TAG=$TAG UAS_ZFS_SNAPSHOT_PRE=$TAG-pre run "$PY" "$INGEST") || rc=$?
+  (cd "$REPO_DIR" && UAS_RUN_TAG=$TAG UAS_ZFS_SNAPSHOT_PRE=$TAG-pre run "$PY" "$INGEST" --legiscan-download) || rc=$?
   if (( rc == 2 )); then
     warn "MongoDB ingest partial: see the weekly_ingest runs document for $TAG"
   elif (( rc != 0 )); then
@@ -375,6 +288,11 @@ validate_counts() {
   done
   (( ${a[runs]:-0} > ${b[runs]:-0} )) || { log "ingest wrote no runs document"; ok=0; }
   (( ok ))
+}
+
+# The committed CSV exports (CLAUDE.md "Repo conventions"); git shows what changed.
+export_csvs() {
+  (cd "$REPO_DIR" && run "$PY" "$EXPORT" --out-dir "$REPO_DIR")
 }
 
 mongodump_archive() {
@@ -429,9 +347,9 @@ prune() {
   return 0
 }
 
-# D13: off-laptop copy (tentatively azcopy to Azure Blob Storage, section 6.2) is not set up yet.
+# D13: off-laptop copy (MongoDB Atlas) is not set up yet.
 offsite_copy() {
-  log "off-laptop copy: not configured (D13 open); skipped"
+  log "off-laptop copy: not configured (D13, Atlas); skipped"
 }
 
 # ---------------------------------------------------------------- main
@@ -454,7 +372,7 @@ trap finish_log EXIT
 exec 9>"$STATE_DIR/lock"
 flock -n 9 || { log "another weekly run is in progress"; exit 1; }
 
-(( DRY_RUN )) && log "dry run: no snapshots, notebooks, ingest, dumps or deletes"
+(( DRY_RUN )) && log "dry run: no snapshots, ingest, exports, dumps or deletes"
 
 export MONGO_URI=${MONGO_URI:-$(env_value MONGO_URI)}
 export MONGO_DB=${MONGO_DB:-$(env_value MONGO_DB)}
@@ -470,10 +388,6 @@ step "snapshot $TAG-pre" snapshot pre
 PRE_TAKEN=1
 ROLLBACK_ARMED=$(( ! DRY_RUN ))
 
-step "back up SQLite DB and CSV exports" backup_repo_files
-REPO_BACKED_UP=$(( ! DRY_RUN ))
-
-step "SQLite notebooks" run_notebooks
 step "MongoDB ingest" run_ingest
 step "validate document counts" validate_counts
 ROLLBACK_ARMED=0
@@ -481,13 +395,13 @@ ROLLBACK_ARMED=0
 # Past this point the data is good; failures are reported but not rolled back.
 post_ok=1
 post_step "snapshot $TAG-post" snapshot post
+post_step "CSV exports" export_csvs
 post_step "mongodump" mongodump_archive
 post_step "prune" prune
 post_step "off-laptop copy" offsite_copy
 trap - ERR INT TERM
 
 (( post_ok )) || { log "FAILED: backup steps (data kept, see above)"; log "log file: $LOG_FILE"; exit 1; }
-rm -f "$RUN_DIR/UAS_Tracker.db"  # only needed for rollback
 if [[ -s $WARN_FILE ]]; then
   log "DONE with warnings:"
   sed 's/^/  - /' "$WARN_FILE"

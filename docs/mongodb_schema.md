@@ -1,6 +1,7 @@
 # MongoDB Schema Proposal
 
-Status: proposal only. No code has changed. The notebooks still write to `UAS_Tracker.db`.
+Status: implemented. Cut over to MongoDB on 2026-10-11 (D18); the SQLite notebooks are deleted and `UAS_Tracker.db` is archived at `/uaspool/backups/UAS_Tracker-final.db`.
+Revision 8 (2026-10-11). Adds D18 (cut-over after one parallel week; MongoDB Atlas as the off-laptop copy) and D19 (keep the coverage pull, flagged for review).
 Revision 7 (2026-10-11). Regulations.gov loader: field mappings in 3.3 and 3.3a, its `runs` document in 8.5, and a rulemaking loader's `"partial"` is a warning for the weekly run (8.5).
 Revision 6 (2026-10-11). Adds D17: `rulemakings` takes API documents from the Federal Register (and later Regulations.gov) beside the hand-entered rows, and `rulemaking_comments` from Regulations.gov (sections 3.3, 3.3a, 4, 7, 8.4, 8.5).
 Revision 5 (2026-10-10). Adds D13–D16: an off-laptop backup that cut-over waits for (tentatively Azure Blob Storage), `uaspool/backups`, raw files outside the repo and out of git, and deferring the coverage-pull decision.
@@ -24,8 +25,10 @@ Revision 5 (2026-10-10). Adds D13–D16: an off-laptop backup that cut-over wait
 | D13 | **Off-laptop backup required; cut-over waits for it.** Until it exists, local `mongodump` only. *Tentative:* Azure Blob Storage, starting around Monday 2026-10-12. Neither the provider nor the date is confirmed | Section 6.1 (layers), 6.2 (tentative Azure layout and restore test), section 9 (cut-over gate), section 10 (open). |
 | D14 | **Add dataset `uaspool/backups`** for `mongodump` archives | Section 6. |
 | D15 | **Raw files: `uaspool/raw` mounted at `/uaspool/raw`, outside the repo. `raw/` added to `.gitignore`.** Git handles large, growing files badly; ZFS snapshots and the off-laptop backup cover them | Section 7. Raw files are no longer committed. `raw_source` paths are relative to `RAW_ROOT`. Existing LegiScan zips move out of the repo. |
-| D16 | **Coverage pull (step 3b): decide after the parallel run** | Step 3b runs during both parallel weeks. Decision criteria are in section 9. |
+| D16 | **Coverage pull (step 3b): decide after the parallel run** | Step 3b runs during both parallel weeks. Decision criteria are in section 9. Decided by D19. |
 | D17 | **`rulemakings` holds API documents beside the hand-entered rows.** Federal Register documents get `_id: "fr:<document_number>"`, Regulations.gov documents `"rg:<documentId>"`. A rule can appear in both sources as two documents | Section 3.3. Hand rows have no `source` field, and `Exported_Rulemakings.csv` and the migration count check read only those. Comments go in `rulemaking_comments` with `_id: "rgc:<commentId>"` (3.3a). |
+| D18 | **Cut over on 2026-10-11, after one parallel week.** The section 9 gate (two passing weeks, working off-laptop backup) was waived. The off-laptop copy will be **MongoDB Atlas**, replacing the tentative Azure plan; it is not set up yet | Overrides D5's two weeks and D13's gate. Before cut-over: final SQLite DB at `/uaspool/backups/UAS_Tracker-final.db`, ZFS snapshots `uaspool/mongo` and `uaspool/raw` `@pre-cutover-2`. `weekly_run.sh` no longer runs the notebooks, which are deleted; `USASpenging_Past_Visualizations.ipynb` moved to `analysis/` and reads MongoDB. Section 6.2's Azure layout is superseded but not yet rewritten for Atlas. |
+| D19 | **Coverage pull (step 3b): keep for now, review later.** Resolves D16 | Only one parallel week ran, with `coverage_pull.new_txns_not_in_feed` = 13 (run `usaspending-2026-10-11`). That is non-zero, so section 9's rule says keep it, but one week is a thin basis. **Review:** look at `new_txns_not_in_feed` and those transactions' `action_date`s over the next weeks, and decide between keeping 3b and widening the D12 lookback. |
 
 Note: `docs/design_decisions.md` was referenced earlier but does not exist in the repo, on any branch, or in either worktree (`UAS_Project-automation`, `UAS_Project-migration`). The decisions above come from the requests that started each revision. If that file is written later, it should be checked against this table.
 
@@ -733,6 +736,8 @@ The `weekly_ingest` document copies `window_start`, `window_end`, `requests`, `u
 
 **Weeks:** the LegiScan refreshes of Sunday 2026-10-11 and Sunday 2026-10-18.
 
+**Outcome:** cut over on 2026-10-11 after week 1 with the gate waived (D18).
+
 **Cut-over gate:** cut over at the next weekly run after **both** of these are true:
 1. The parallel-run checks (9.2) pass for two consecutive weeks.
 2. **The off-laptop backup is working (D13):** at least one weekly dump and raw sync has been uploaded, and the restore test in 6.2 has passed. The provider (tentatively Azure) and its start date are open.
@@ -802,7 +807,7 @@ Raw requests and responses are saved under `$RAW_ROOT/usaspending/award_unique_i
 
 These stay open until you confirm them. Nothing elsewhere in the doc depends on a guessed answer.
 
-1. **Off-laptop backup provider and start date (D13):** tentatively Azure Blob Storage, starting around Monday 2026-10-12. Neither is confirmed. Cut-over waits for this either way.
-2. **Azure details, if Azure is confirmed:** storage account name and region, auth method (SAS vs service principal), and whether an immutability policy is available on the account (6.2).
+1. **Off-laptop copy on MongoDB Atlas (D13, D18):** not set up. Open: cluster tier and region, how weekly data gets there (e.g. `mongorestore` of the weekly dump vs. a sync), where raw files and the final SQLite DB go (Atlas holds documents, not the `/uaspool/raw` files), and a restore test to replace 6.2. `weekly_run.sh`'s `offsite_copy` is still a stub.
+2. **Coverage pull review (D19):** revisit after a few more weekly runs.
 3. **`award_unique_id` filter outcome:** pending your report from the section 9.1 test. It decides the primary backfill method (8.3).
 4. **`PSC` value shape:** pending your report from the section 9.1 responses. It decides how the loader extracts `psc_code` (3.4.3).

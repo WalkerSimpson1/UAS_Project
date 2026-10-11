@@ -11,8 +11,9 @@ Writes:
     Exported_Legislation_Current.csv     legislation current view
     Exported_Rulemakings.csv             rulemakings, hand-entered rows only (D17)
 
---out-dir is required so a parallel-run export never overwrites the CSVs the
-SQLite notebooks write to the repo root. After cut-over, pass the repo root.
+weekly_run.sh passes the repo root (since cut-over); these are the committed
+CSV exports. --out-dir stays required so a test export never lands there by
+accident.
 """
 
 import argparse
