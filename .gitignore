@@ -228,3 +228,7 @@ raw/
 
 # LegiScan zips live on /uaspool/raw/legiscan/<date>/ (docs/mongodb_schema.md 6.3)
 legiscan_getDatasetRaw_data/
+
+# Cut-over (docs/mongodb_schema.md 6.3, 9): MongoDB is the system of record.
+# The final SQLite DB is archived at /uaspool/backups/UAS_Tracker-final.db.
+UAS_Tracker.db
