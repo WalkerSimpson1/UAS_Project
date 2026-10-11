@@ -1,6 +1,7 @@
 # MongoDB Schema Proposal
 
 Status: implemented. Cut over to MongoDB on 2026-10-11 (D18); the SQLite notebooks are deleted and `UAS_Tracker.db` is archived at `/uaspool/backups/UAS_Tracker-final.db`.
+Revision 9 (2026-10-11). Adds D20: the weekly run restores its `mongodump` archive to MongoDB Atlas with `mongorestore --drop` (sections 6.1, 10).
 Revision 8 (2026-10-11). Adds D18 (cut-over after one parallel week; MongoDB Atlas as the off-laptop copy) and D19 (keep the coverage pull, flagged for review).
 Revision 7 (2026-10-11). Regulations.gov loader: field mappings in 3.3 and 3.3a, its `runs` document in 8.5, and a rulemaking loader's `"partial"` is a warning for the weekly run (8.5).
 Revision 6 (2026-10-11). Adds D17: `rulemakings` takes API documents from the Federal Register (and later Regulations.gov) beside the hand-entered rows, and `rulemaking_comments` from Regulations.gov (sections 3.3, 3.3a, 4, 7, 8.4, 8.5).
@@ -29,6 +30,7 @@ Revision 5 (2026-10-10). Adds D13–D16: an off-laptop backup that cut-over wait
 | D17 | **`rulemakings` holds API documents beside the hand-entered rows.** Federal Register documents get `_id: "fr:<document_number>"`, Regulations.gov documents `"rg:<documentId>"`. A rule can appear in both sources as two documents | Section 3.3. Hand rows have no `source` field, and `Exported_Rulemakings.csv` and the migration count check read only those. Comments go in `rulemaking_comments` with `_id: "rgc:<commentId>"` (3.3a). |
 | D18 | **Cut over on 2026-10-11, after one parallel week.** The section 9 gate (two passing weeks, working off-laptop backup) was waived. The off-laptop copy will be **MongoDB Atlas**, replacing the tentative Azure plan; it is not set up yet | Overrides D5's two weeks and D13's gate. Before cut-over: final SQLite DB at `/uaspool/backups/UAS_Tracker-final.db`, ZFS snapshots `uaspool/mongo` and `uaspool/raw` `@pre-cutover-2`. `weekly_run.sh` no longer runs the notebooks, which are deleted; `USASpenging_Past_Visualizations.ipynb` moved to `analysis/` and reads MongoDB. Section 6.2's Azure layout is superseded but not yet rewritten for Atlas. |
 | D19 | **Coverage pull (step 3b): keep for now, review later.** Resolves D16 | Only one parallel week ran, with `coverage_pull.new_txns_not_in_feed` = 13 (run `usaspending-2026-10-11`). That is non-zero, so section 9's rule says keep it, but one week is a thin basis. **Review:** look at `new_txns_not_in_feed` and those transactions' `action_date`s over the next weeks, and decide between keeping 3b and widening the D12 lookback. |
+| D20 | **Off-laptop copy: restore each weekly dump to Atlas with `mongorestore --drop`.** Implements D13 on Atlas (D18) | Section 6.1 layer 3. Atlas mirrors the latest week's DB; history stays in the local snapshots and dumps. `ATLAS_URI` in `.env`, passed through a 0600 config file and redacted from tool output. A failure is a warning (exit 2), not a rollback. Raw files and the final SQLite DB are not covered yet (section 10). |
 
 Note: `docs/design_decisions.md` was referenced earlier but does not exist in the repo, on any branch, or in either worktree (`UAS_Project-automation`, `UAS_Project-migration`). The decisions above come from the requests that started each revision. If that file is written later, it should be checked against this table.
 
@@ -504,15 +506,19 @@ uaspool/backups                # mongodump archives (D14)
 |---|---|---|---|---|
 | 1. ZFS snapshots | `uaspool/mongo` + `uaspool/raw`, same name | on the pool | before and after each weekly run (`weekly-2026-10-11-pre` / `-post`) | from the first Mongo run |
 | 2. `mongodump --archive --gzip` | whole `uas_tracker` DB | `uaspool/backups/uas_tracker_<date>.archive.gz` | weekly, right after the `-post` snapshot | from the first Mongo run (D13: local-only until the off-laptop copy exists) |
-| 3. Off-laptop copy | dump archives + raw files | *tentatively* Azure Blob Storage (6.2) | weekly, after layer 2 | **not yet set up**. Tentatively around Monday 2026-10-12 (D13, open) |
+| 3. Off-laptop copy | whole `uas_tracker` DB (from the layer 2 archive) | MongoDB Atlas, DB `uas_tracker` (D20) | weekly, after layer 2 and pruning | `weekly_run.sh` `offsite_copy`, from 2026-10-11. Raw files: **not yet covered** (section 10) |
 
 - **Retention:** keep weekly snapshots and dumps for 12 weeks, and monthly ones (first run of each month) for 12 months. Raw files are never pruned, locally or off-laptop, because they are the source of truth (section 7).
 - **Restoring from layers 1–2:** use `zfs rollback` for a bad run, or `mongorestore --archive --gzip` into a fresh `dbPath` for anything else.
 - **Rebuild of last resort:** raw files (on `uaspool/raw` and the off-laptop copy) plus the bulk CSVs in the repo can regenerate everything except hand-entered fields. The `rulemakings` and current-`legislation` CSV exports committed to git (see "Git changes" below) cover those.
 
-**Interim risk until layer 3 exists (D13):** until then, every copy of the MongoDB data and the raw files is on one laptop and one pool. That's acceptable only because **SQLite remains the system of record during the parallel run**, and its CSV exports are still committed and pushed. This is why cut-over waits for the off-laptop backup (section 9).
+**Layer 3 on Atlas (D20):** `offsite_copy` runs `mongorestore --archive=<this run's dump> --gzip --nsInclude='uas_tracker.*' --drop --stopOnError` against `ATLAS_URI` (`.env`). `--drop` replaces each collection in the dump, so Atlas holds only the latest week: it is a mirror, not a history. History stays in layers 1–2. The URI goes through a 0600 config file, as for `mongodump`, so it never appears in `ps`, and both tools' output is filtered so a URI they print in an error is redacted in the log. A missing `ATLAS_URI`, a missing dump, or a failed restore is a **warning** (run exit 2), never a rollback: the local layers are already written. A restore that fails part way can leave Atlas missing collections until the next good run.
 
-### 6.2 Off-laptop copy: tentative Azure Blob Storage design (D13, open)
+**Interim risk until layer 3 existed (D13, historical):** until then, every copy of the MongoDB data and the raw files is on one laptop and one pool. That's acceptable only because **SQLite remains the system of record during the parallel run**, and its CSV exports are still committed and pushed. This is why cut-over waits for the off-laptop backup (section 9).
+
+### 6.2 Off-laptop copy: tentative Azure Blob Storage design (D13, superseded by D18/D20)
+
+**Superseded:** the DB copy is on Atlas (6.1, D20). The raw-file layout and the restore verification below still describe what is open for raw files and the restore test (section 10).
 
 **Tentative.** Azure is the likely provider but isn't confirmed, and neither is the start date. Everything in this subsection is a proposal to use if Azure is confirmed. The **restore verification at the end applies whatever the provider is.** Account name, region, and auth are open (section 10).
 
@@ -807,7 +813,7 @@ Raw requests and responses are saved under `$RAW_ROOT/usaspending/award_unique_i
 
 These stay open until you confirm them. Nothing elsewhere in the doc depends on a guessed answer.
 
-1. **Off-laptop copy on MongoDB Atlas (D13, D18):** not set up. Open: cluster tier and region, how weekly data gets there (e.g. `mongorestore` of the weekly dump vs. a sync), where raw files and the final SQLite DB go (Atlas holds documents, not the `/uaspool/raw` files), and a restore test to replace 6.2. `weekly_run.sh`'s `offsite_copy` is still a stub.
+1. **Off-laptop copy on MongoDB Atlas (D13, D18, D20):** the weekly dump is restored to Atlas (6.1). Still open: where raw files and the final SQLite DB go (Atlas holds documents, not the `/uaspool/raw` files), whether Atlas should keep more than the latest week, and a restore test from Atlas to replace 6.2's.
 2. **Coverage pull review (D19):** revisit after a few more weekly runs.
 3. **`award_unique_id` filter outcome:** pending your report from the section 9.1 test. It decides the primary backfill method (8.3).
 4. **`PSC` value shape:** pending your report from the section 9.1 responses. It decides how the loader extracts `psc_code` (3.4.3).

@@ -6,7 +6,8 @@
 #   3. Validate MongoDB document counts
 #   on failure in 1-3: stop mongod, roll back both datasets to -pre, start mongod
 #   on success:        -post snapshot, CSV exports to the repo root, mongodump,
-#                      prune (12 weekly / 12 monthly), off-laptop copy (stub, D13)
+#                      prune (12 weekly / 12 monthly), restore the dump to Atlas (D20;
+#                      a failure there is a warning)
 #
 # Since cut-over (section 9) MongoDB is the system of record; the SQLite
 # notebooks are no longer run.
@@ -295,16 +296,29 @@ export_csvs() {
   (cd "$REPO_DIR" && run "$PY" "$EXPORT" --out-dir "$REPO_DIR")
 }
 
-mongodump_archive() {
-  local out=$BACKUP_DIR/uas_tracker_${TAG#weekly-}.archive.gz cfg rc=0
-  # URI goes through a 0600 config file so credentials don't show in ps.
-  cfg=$(mktemp "$RUN_DIR/mongodump.XXXXXX.yaml")
+# Writes a 0600 config file holding URI $2 for mongodump/mongorestore and prints
+# its path. The URI goes through the file so credentials don't show in ps.
+uri_config() {
+  local cfg
+  cfg=$(mktemp "$RUN_DIR/$1.XXXXXX.yaml") || return 1
   chmod 600 "$cfg"
-  printf "uri: '%s'\n" "${MONGO_URI//\'/\'\'}" > "$cfg"
-  run mongodump --config="$cfg" --db="$MONGO_DB" --archive="$out.partial" --gzip \
-    && run mv "$out.partial" "$out" || rc=1
+  printf "uri: '%s'\n" "${2//\'/\'\'}" > "$cfg" || { rm -f "$cfg"; return 1; }
+  printf '%s' "$cfg"
+}
+
+# Filters mongodump/mongorestore output for the log: their connection errors print
+# the whole URI, password included.
+redact_uris() {
+  sed -u -E 's#mongodb(\+srv)?://[^[:space:]]*#mongodb\1://[REDACTED]#g'
+}
+
+mongodump_archive() {
+  local cfg rc=0
+  cfg=$(uri_config mongodump "$MONGO_URI")
+  run mongodump --config="$cfg" --db="$MONGO_DB" --archive="$DUMP_FILE.partial" --gzip 2>&1 | redact_uris \
+    && run mv "$DUMP_FILE.partial" "$DUMP_FILE" || rc=1
   rm -f "$cfg"
-  (( rc == 0 )) && log "dump: $out"
+  (( rc == 0 )) && log "dump: $DUMP_FILE"
   return "$rc"
 }
 
@@ -347,9 +361,31 @@ prune() {
   return 0
 }
 
-# D13: off-laptop copy (MongoDB Atlas) is not set up yet.
+# D13, D20: off-laptop copy. Restores this run's dump into Atlas (ATLAS_URI in .env),
+# dropping each collection in the dump first, so Atlas mirrors the local DB as of the
+# -post snapshot. Every failure here is a warning (exit 2), never a rollback or exit 1:
+# the local snapshots and dump are already in place.
 offsite_copy() {
-  log "off-laptop copy: not configured (D13, Atlas); skipped"
+  local uri cfg rc=0
+  uri=$(env_value ATLAS_URI)
+  if [[ -z $uri ]]; then
+    warn "off-laptop copy skipped: ATLAS_URI is not set in $REPO_DIR/.env"
+    return 0
+  fi
+  if (( ! DRY_RUN )) && [[ ! -s $DUMP_FILE ]]; then
+    warn "off-laptop copy skipped: no dump at $DUMP_FILE"
+    return 0
+  fi
+  cfg=$(uri_config mongorestore "$uri") || { warn "off-laptop copy skipped: cannot write the mongorestore config"; return 0; }
+  run mongorestore --config="$cfg" --archive="$DUMP_FILE" --gzip \
+    --nsInclude="$MONGO_DB.*" --drop --stopOnError 2>&1 | redact_uris || rc=$?
+  rm -f "$cfg"
+  if (( rc != 0 )); then
+    warn "off-laptop copy to Atlas failed (mongorestore exit $rc); Atlas may be missing collections until the next run"
+  elif (( ! DRY_RUN )); then
+    log "off-laptop copy: $DUMP_FILE restored to Atlas"
+  fi
+  return 0
 }
 
 # ---------------------------------------------------------------- main
@@ -382,6 +418,7 @@ step "preflight" preflight
 step "wait for network" wait_for_network
 pick_tag
 RUN_DIR=$STATE_DIR/runs/$TAG
+DUMP_FILE=$BACKUP_DIR/uas_tracker_${TAG#weekly-}.archive.gz
 mkdir -p "$RUN_DIR"
 
 step "snapshot $TAG-pre" snapshot pre
@@ -398,7 +435,7 @@ post_step "snapshot $TAG-post" snapshot post
 post_step "CSV exports" export_csvs
 post_step "mongodump" mongodump_archive
 post_step "prune" prune
-post_step "off-laptop copy" offsite_copy
+post_step "off-laptop copy (Atlas)" offsite_copy
 trap - ERR INT TERM
 
 (( post_ok )) || { log "FAILED: backup steps (data kept, see above)"; log "log file: $LOG_FILE"; exit 1; }
