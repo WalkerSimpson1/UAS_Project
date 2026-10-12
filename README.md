@@ -27,7 +27,7 @@
 <br> <br>
 ## Data Sources
 
-To track federal UAS policy, I am using a combination of the LegiScan API and multiple government-based sources. More info on how I query each source can be found in [How it works](#how-it-works).
+To track federal UAS policy, I am using a combination of the LegiScan API and multiple government-based sources. More info on how I use each source can be found in [How it works](#how-it-works).
 
 ### LegiScan API
 
@@ -229,12 +229,6 @@ This stops mongod, rolls back the database and raw files, starts mongod again, a
 ### Ingest
 `weekly_run.sh` takes the `-pre` snapshots, and then calls `scripts/weekly_ingest.py`. This script runs the four loader scripts: `legiscan_loader.py`, `usaspending_loader.py`, `federal_register_loader.py`, and `regulations_loader.py`. Each loader saves the raw response to `/uaspool/raw` first, then upserts into MongoDB. Each loader writes its own `runs` document, and `weekly_ingest.py` writes a parent document linking the four.
 
-**More info on each loader:**
-1. **`legiscan_loader.py`**
-2. **`usaspending_loader.py`**
-3. **`federal_register_loader.py`**
-4. **`regulations_loader.py`**
-
 ### Data Model
 Everything lives in my `uas_tracker` MongoDB database.
 
@@ -267,6 +261,32 @@ Once validation passes, `weekly_run.sh` runs four steps that produce data output
 4. **MongoDB Atlas:** `mongorestore --drop` loads the mongodump into MongoDB Atlas, so the cloud copy mirrors my local database.
 
 ## Live Database
+**The Database on MongoDB Atlas updates weekly, not in real time**
+Every week, when the scripts run, weekly_run.sh makes a mongodump backup, and restores it to Atlas with mongorestore --drop (--drop deletes each old backup collection before loading the new one).
+
+### Guide to connecting  
+<details>
+<summary><b>Connect to the live database (read-only)</b></summary>
+
+**Connection string:** `mongodb+srv://uas-policy-database.gg108jz.mongodb.net/uas_tracker`
+**Username:** `viewer` · **Password:** `viewer` 
+
+**mongosh:**
+```bash
+mongosh "mongodb+srv://viewer:viewer@uas-policy-database.gg108jz.mongodb.net/uas_tracker"
+```
+
+**Compass:** paste the connection string above with `viewer:viewer@` after `mongodb+srv://`.
+
+**Example queries:**
+```javascript
+db.legislation.countDocuments()
+db.rulemakings.find({ source: "federal_register" }, { raw: 0 }).limit(5)
+```
+
+**Main collections:** `legislation`, `contract_transactions`, `contracts`, `rulemakings`, `rulemaking_comments`
+
+</details>
 
 ## My Building Process
 
