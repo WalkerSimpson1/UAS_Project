@@ -14,7 +14,7 @@
 
 To track federal UAS policy, I am using a combination of the LegiScan API and multiple government-based sources. More info on how I query each source can be found in [How it works](#how-it-works).
 
-### LegiScan API
+<table><tr><td><h3>LegiScan API</h3></td></tr></table>
 
 I am using my free tier of LegiScan's Public API to source legislative data. The API covers both federal and state level legislative data, and I am using only the data on US Congress.
 
@@ -25,7 +25,7 @@ I am using my free tier of LegiScan's Public API to source legislative data. The
 
 **Code:** The code for my LegiScan API request and MongoDB ingest can be found in [legiscan_loader.py](https://github.com/WalkerSimpson1/UAS_Project/blob/main/scripts/legiscan_loader.py).
 
-### USASpending API
+<table><tr><td><h3>USASpending API</h3></td></tr></table>
 
 I use multiple endpoints from the USASpending API to compile contract data. Specifically, I am gathering data on contracts with the Product Service Code (psc) of 1550. This is the code for Unmanned Aircraft. The USASpending API requires no account or API Key. It must be noted that contract data comes from the Federal Procurement Data System, which is subject to delays of different times.
 
@@ -37,7 +37,7 @@ I use multiple endpoints from the USASpending API to compile contract data. Spec
 
 **Code:** The code for my USASpending requests and MongoDB ingest can be found in [usaspending_loader.py](https://github.com/WalkerSimpson1/UAS_Project/blob/main/scripts/usaspending_loader.py).
 
-### Federal Register API
+<table><tr><td><h3>Federal Register API</h3></td></tr></table>
 
 I use the Federal Register API to gather last week's new rules, proposed rules, and notices. This API requires no account or API key, and returns JSON.
 
@@ -47,7 +47,7 @@ I use the Federal Register API to gather last week's new rules, proposed rules, 
 
 **Code:** The code for my Federal Register requests and MongoDB ingest can be found at [federal_register_loader.py](https://github.com/WalkerSimpson1/UAS_Project/blob/main/scripts/federal_register_loader.py).
 
-### Regulations API
+<table><tr><td><h3>Regulations API</h3></td></tr></table>
 
 I use the Regulations API to gather docket comments. Dockets are spaces dedicated to a rule, from proposed rulemaking -> interim rule -> final rule. Through a rulemakings life cycle members of the public comment their opinions on its docket. This is a great source to determine the stance of different key actors - such as business owners, manufacturers, hobbyists, etc.
 
