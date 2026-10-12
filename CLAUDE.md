@@ -46,7 +46,7 @@ Exit codes: 0 means ok, 1 means failed, and 2 means completed with warnings (the
 ## Data notes
 
 - Fiscal year: the FY starts Oct 1, and FY = calendar year + 1 for Oct–Dec.
-- `legislation` and `rulemakings` include rows entered by hand from congress.gov and Federal Register alerts. Since cut-over, hand rows go into MongoDB directly. In `rulemakings`, hand rows have no `source` field, and API documents have `source` and a prefixed `_id` (`fr:`, or `rg:` for Regulations.gov). `Exported_Rulemakings.csv` holds hand rows only.
+- There are no hand-entered rows: every document in `legislation` and `rulemakings` comes from an API. The code still supports hand rows (in `rulemakings`, a hand row would have no `source` field), but none exist, and the hand-maintained fields (`sequence`, `track`, `event_date`, `event_description`, `notes`) are all null. API documents in `rulemakings` have `source` and a prefixed `_id` (`fr:`, or `rg:` for Regulations.gov). `Exported_Rulemakings.csv` exports hand rows only, so it has no data rows.
 - The live-API `contracts*` tables and the bulk-CSV `contracts_past*` tables use different keys (`api_internal_id`/`award_key` vs `contract_award_unique_key`). See schema doc section 5 before joining them.
 
 ## Repo conventions
