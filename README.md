@@ -19,7 +19,7 @@
   - [Outputs](#outputs)
 - [Live Database](#live-database)
 - [My Building Process](#my-building-process)
-- [Whats Planned Next](#whats-planned-next)
+- [What's Planned Next](#whats-planned-next)
 - [Data Safety](#data-safety)
   - [Backups and Recovery](#backups-and-recovery)
   - [Secrets and Access](#secrets-and-access)
@@ -35,14 +35,14 @@ I am using my free tier of LegiScan's Public API to source legislative data. The
 
 **Simplified pipeline:**
 
-1. Query the **`getDatasetList`** endpoint for the dataset_hash and the access_key to the getDatasetRaw endpoint. LegiScan terms require that I download data from getDatasetRaw only when the dataset_hash had changed.
+1. Query the **`getDatasetList`** endpoint for the dataset_hash and the access_key to the getDatasetRaw endpoint. LegiScan terms require that I download data from getDatasetRaw only when the dataset_hash has changed.
 2. Query **`getDatasetRaw`** for a compressed zip of JSON files (one file per bill). Each bill contains a change_hash. Every UAS bill is saved as a weekly snapshot in the **legislation_history** dataset. A bill's entry in the **legislation** dataset is only updated when its change_hash differs from last week's.
 
 **Code:** The code for my LegiScan API request and MongoDB ingest can be found in [legiscan_loader.py](https://github.com/WalkerSimpson1/UAS_Project/blob/main/scripts/legiscan_loader.py).
 
 ### USASpending API
 
-I use multiple endpoints from the USASpending API to compile contract data. Specifically, I am gathering data on contracts with the Product Service Code (psc) of 1550. This is the code for Unmanned Aircraft. The USASpending API requires no account or API Key. It must be noted that contract data comes from the Federal Procurement Data System, which is subject to delays of different times.
+I use multiple endpoints from the USASpending API to compile contract data. Specifically, I am gathering data on contracts with the Product Service Code (PSC) of 1550. This is the code for Unmanned Aircraft. The USASpending API requires no account or API key. It must be noted that contract data comes from the Federal Procurement Data System, which is subject to delays of different times.
 
 **Endpoints (all POST):**
 
@@ -64,14 +64,14 @@ I use the Federal Register API to gather last week's new rules, proposed rules, 
 
 ### Regulations API
 
-I use the Regulations API to gather docket comments. Dockets are spaces dedicated to a rule, from proposed rulemaking -> interim rule -> final rule. Through a rulemakings life cycle members of the public comment their opinions on its docket. This is a great source to determine the stance of different key actors - such as business owners, manufacturers, hobbyists, etc.
+I use the Regulations API to gather docket comments. Dockets are spaces dedicated to a rule, from proposed rulemaking -> interim rule -> final rule. Through a rulemaking's life cycle, members of the public comment their opinions on its docket. This is a great source to determine the stance of different key actors - such as business owners, manufacturers, hobbyists, etc.
 
 The Regulations.gov API is special because it is the only one that depends on another API's output, this being the Federal Register API. This API does require an account, which is free, and returns JSON. The API key comes from [api.data.gov](https://api.data.gov/signup/).
 
 **Endpoints (all GET):**
 
 1. **`/documents?filter[docketId]=<docket>`** -- Used to link the regulations.gov dockets to Federal Register documents by frDocNum.
-2. **`/comments?filter[commentOnId]=<objectId>&sort=-lastModifiedDate`** -- This endpoint lists the comments on an individual document. It writes to the rulemaking_comments dataset with the title, posted date, and agency. The docketid is copied from the parent document.
+2. **`/comments?filter[commentOnId]=<objectId>&sort=-lastModifiedDate`** -- This endpoint lists the comments on an individual document. It writes to the rulemaking_comments dataset with the title, posted date, and agency. The docketId is copied from the parent document.
 3. **`/comments/{commentId}`** -- This endpoint gets the detail for an individual comment. It writes the organization, submitter_name, and comment_text. It's limited to 300 per weekly run, newest first, across all dockets.
 
 **Code:** The code for my Regulations API request and MongoDB ingest can be found at [regulations_loader.py](https://github.com/WalkerSimpson1/UAS_Project/blob/main/scripts/regulations_loader.py).
@@ -103,7 +103,7 @@ UAS_Project/
 │   └── migrate_sqlite_to_mongo.py # One-time: SQLite → MongoDB migration
 │
 ├── analysis/
-│   └── USASpenging_Past_Visualizations.ipynb   # Read-only obligation/competition charts
+│   └── USASpending_Past_Visualizations.ipynb   # Read-only obligation/competition charts
 │
 ├── docs/
 │   ├── mongodb_schema.md          # Schema spec: collections, indexes, decisions D1–D20
@@ -147,7 +147,7 @@ Data is gathered from multiple endpoints of the LegiScan API, the USASpending.go
 ↓ <br>
 This data feeds into one local MongoDB database on my ThinkPad X1 Gen 7 running Ubuntu 26.04.1 LTS, which is then used to create the CSV exports, backups, and the cloud database on MongoDB Atlas. <br>
 <br>
-I chose MongoDB because I am covering MongoDB in my Databases class at LSE, and because I have a MongoDB subscription with the GitHub Student Developer Pack. **I am thinking of switching to PostgreSQL**, more info available in [Whats Planned Next](#whats-planned-next).
+I chose MongoDB because I am covering MongoDB in my Databases class at LSE, and because I have a MongoDB certification learning course with the GitHub Student Developer Pack. **I am thinking of switching to PostgreSQL**, more info available in [What's Planned Next](#whats-planned-next).
 
 ### Scheduling
 The weekly run (`weekly_run.sh`, which calls the ingest scripts) runs via systemd. Each run uses two files in systemd, plus a one-time setup script.
@@ -255,20 +255,21 @@ Once validation passes, `weekly_run.sh` runs four steps that produce data output
    - `Exported_Legislation_Current.csv`: the latest state of each bill
    - `Exported_SQL_Contracts_Table.csv`: awards with `lookup_status: "ok"`
    - `Exported_Contract_Transactions.csv`: every transaction
-   - `Exported_Rulemakings.csv`: hand-entered rows only
+   - `Exported_Rulemakings.csv`: hand-entered rows only (I have none, so it is empty)
 2. **mongodump:** The whole database is dumped to `/uaspool/backups/uas_tracker_<date>.archive.gz`.
 3. **Prune:** Keeps everything from the last 12 weeks plus the first run of each month for 12 months. Snapshots are deleted only through `uas-zfs-prune`.
 4. **MongoDB Atlas:** `mongorestore --drop` loads the mongodump into MongoDB Atlas, so the cloud copy mirrors my local database.
 
 ## Live Database
 **The Database on MongoDB Atlas updates weekly, not in real time**
+
 Every week, when the scripts run, weekly_run.sh makes a mongodump backup, and restores it to Atlas with mongorestore --drop (--drop deletes each old backup collection before loading the new one).
 
 ### Guide to connecting  
 <details>
 <summary><b>Connect to the live database (read-only)</b></summary>
 
-**Connection string:** `mongodb+srv://uas-policy-database.gg108jz.mongodb.net/uas_tracker`
+**Connection string:** `mongodb+srv://uas-policy-database.gg108jz.mongodb.net/uas_tracker` <br>
 **Username:** `viewer` · **Password:** `viewer` 
 
 **mongosh:**
@@ -289,8 +290,24 @@ db.rulemakings.find({ source: "federal_register" }, { raw: 0 }).limit(5)
 </details>
 
 ## My Building Process
+Before automating the data collection and migrating to MongoDB in early October 2026, I had built this project manually in Python notebooks and SQLite/DB Browser.
 
-## Whats Planned Next
+**Currently my building workflow consists of...** 
+1. Editing CLAUDE.md in **Neovim (with the LazyVim distribution)** on the context and goals of my new feature.
+2. Opening multiple Claude agents in **herdr**, often in individual git worktrees.
+3. Prompting the Claude agents on the individual sections each handles. 
+4. Reviewing the new code and mongod compatibility in a **tmux** session with one pane in Neovim, another running mongod, and another with Claude Code in the main branch to refer to what's in main. 
+<br> <br>
+**Wanted changes to my workflow**
+1. I want to compile a set of the best/ideal prompts to use for specific situations with Claude Code.
+2. I have installed the Claude Code Vibewise plugin and "Court of Claude" skill, which aim to reduce learning losses and AI agreeableness. Have yet to use them for serious building.
+3. Using yazi to navigate API response and mongod files.
+
+## What's Planned Next
+**Apart from keeping up with the weekly updates and familiarizing myself more with these new tools...**
+1. Quantitative text-based analysis of docket comments from regulations.gov
+2. More advanced historical analysis, specifically forms of regression with contracts/transactions and linking contract locations to congressional district/state sponsor and co-sponsor likelihood.
+3. Potentially moving from MongoDB to PostgreSQL. More info on why I chose MongoDB is in the Methodology section of the substack, however it was mainly because it is the cloud-based software covered in my Databases class at LSE, and because I have a MongoDB certification learning course with my LSE GitHub Education Account. PostgreSQL might be a better fit for business applications though.
 
 ## Data Safety
 ### Backups and Recovery

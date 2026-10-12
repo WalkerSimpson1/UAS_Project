@@ -32,7 +32,7 @@ Exit codes: 0 means ok, 1 means failed, and 2 means completed with warnings (the
 
 ## Code layout
 
-- `analysis/USASpenging_Past_Visualizations.ipynb`: fiscal-week/month obligation charts, `weekly_rank()` and competition trends, read from MongoDB (`contracts_past_transactions`, `contracts_weekly_transactions_all`) through `mongo_common.get_db()`. Run it from inside `analysis/`. It only reads; `weekly_run.sh` does not run it.
+- `analysis/USASpending_Past_Visualizations.ipynb`: fiscal-week/month obligation charts, `weekly_rank()` and competition trends, read from MongoDB (`contracts_past_transactions`, `contracts_weekly_transactions_all`) through `mongo_common.get_db()`. Run it from inside `analysis/`. It only reads; `weekly_run.sh` does not run it.
 - `scripts/` (MongoDB): run them from the repo root with `.venv/bin/python`. `mongo_common.py` holds the shared config and helpers. Every loader saves the raw response under `$RAW_ROOT` before loading it, and its writes are upserts or `$setOnInsert`, so re-running a loader is safe.
   - `weekly_ingest.py`: the weekly entry point.
   - `legiscan_loader.py` loads `legislation_history` (one snapshot per bill per week) and `legislation` (latest state).
