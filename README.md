@@ -1,5 +1,5 @@
-#UAS Project | Weekly API -> MongoDB Data Pipeline and Analysis  
-![UAS Project Logo](docs/images/logo.)
+# UAS Project | Weekly API -> MongoDB Data Pipeline and Analysis  
+![UAS Project Logo](docs/images/logo.png)
 
 **Table of Contents** <br> 
 - [Data Sources](#data-sources)
