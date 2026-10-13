@@ -255,7 +255,6 @@ Once validation passes, `weekly_run.sh` runs four steps that produce data output
    - `Exported_Legislation_Current.csv`: the latest state of each bill
    - `Exported_SQL_Contracts_Table.csv`: awards with `lookup_status: "ok"`
    - `Exported_Contract_Transactions.csv`: every transaction
-   - `Exported_Rulemakings.csv`: hand-entered rows only (I have none, so it is empty)
 2. **mongodump:** The whole database is dumped to `/uaspool/backups/uas_tracker_<date>.archive.gz`.
 3. **Prune:** Keeps everything from the last 12 weeks plus the first run of each month for 12 months. Snapshots are deleted only through `uas-zfs-prune`.
 4. **MongoDB Atlas:** `mongorestore --drop` loads the mongodump into MongoDB Atlas, so the cloud copy mirrors my local database.
