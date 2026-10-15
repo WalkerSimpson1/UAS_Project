@@ -88,6 +88,18 @@ def days_ago(n, today=None):
     return (today or date.today()) - timedelta(days=n)
 
 
+def fiscal_year(d=None):
+    """Federal fiscal year of a date: FY starts Oct 1, so Oct-Dec belong to
+    the next calendar year's FY (2026-10-01 is FY2027)."""
+    d = d or date.today()
+    return d.year + (d.month >= 10)
+
+
+def fy_start(d=None):
+    """Oct 1 that starts the fiscal year containing d."""
+    return date(fiscal_year(d) - 1, 10, 1)
+
+
 # ---------------------------------------------------------------- values
 
 

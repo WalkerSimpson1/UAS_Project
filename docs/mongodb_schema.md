@@ -1,6 +1,7 @@
 # MongoDB Schema Proposal
 
 Status: implemented. Cut over to MongoDB on 2026-10-11 (D18); the SQLite notebooks are deleted and `UAS_Tracker.db` is archived at `/uaspool/backups/UAS_Tracker-final.db`.
+Revision 10 (2026-10-15). Adds D21: the award search window comes from the run date (current FY, at least 120 days back) instead of a fixed 2025-10-01 (sections 8.2, 8.5), and an open item to load the FY2026 bulk CSVs around January 2027 (section 10).
 Revision 9 (2026-10-11). Adds D20: the weekly run restores its `mongodump` archive to MongoDB Atlas with `mongorestore --drop` (sections 6.1, 10).
 Revision 8 (2026-10-11). Adds D18 (cut-over after one parallel week; MongoDB Atlas as the off-laptop copy) and D19 (keep the coverage pull, flagged for review).
 Revision 7 (2026-10-11). Regulations.gov loader: field mappings in 3.3 and 3.3a, its `runs` document in 8.5, and a rulemaking loader's `"partial"` is a warning for the weekly run (8.5).
@@ -31,6 +32,7 @@ Revision 5 (2026-10-10). Adds D13–D16: an off-laptop backup that cut-over wait
 | D18 | **Cut over on 2026-10-11, after one parallel week.** The section 9 gate (two passing weeks, working off-laptop backup) was waived. The off-laptop copy will be **MongoDB Atlas**, replacing the tentative Azure plan; it is not set up yet | Overrides D5's two weeks and D13's gate. Before cut-over: final SQLite DB at `/uaspool/backups/UAS_Tracker-final.db`, ZFS snapshots `uaspool/mongo` and `uaspool/raw` `@pre-cutover-2`. `weekly_run.sh` no longer runs the notebooks, which are deleted; `USASpending_Past_Visualizations.ipynb` moved to `analysis/` and reads MongoDB. Section 6.2's Azure layout is superseded but not yet rewritten for Atlas. |
 | D19 | **Coverage pull (step 3b): keep for now, review later.** Resolves D16 | Only one parallel week ran, with `coverage_pull.new_txns_not_in_feed` = 13 (run `usaspending-2026-10-11`). That is non-zero, so section 9's rule says keep it, but one week is a thin basis. **Review:** look at `new_txns_not_in_feed` and those transactions' `action_date`s over the next weeks, and decide between keeping 3b and widening the D12 lookback. |
 | D20 | **Off-laptop copy: restore each weekly dump to Atlas with `mongorestore --drop`.** Implements D13 on Atlas (D18) | Section 6.1 layer 3. Atlas mirrors the latest week's DB; history stays in the local snapshots and dumps. `ATLAS_URI` in `.env`, passed through a 0600 config file and redacted from tool output. A failure is a warning (exit 2), not a rollback. Raw files and the final SQLite DB are not covered yet (section 10). |
+| D21 | **Award search window: current FY, at least 120 days back.** Replaces the fixed `2025-10-01` start (FY2026), which still ran after FY2027 began on 2026-10-01 | Start = `min(fy_start(run_date), run_date − 120 days)`, end = yesterday (`mongo_common.fiscal_year` / `fy_start`). The 120 days keep the prior FY in the search through about late January, so prior-FY DoD awards that USASpending publishes ~90 days late still come in. Awards that drop out of the window stay in `contracts` (writes are upserts; nothing is deleted). `steps.award_search` records `fiscal_year`, `start_date`, `end_date`. Section 9.1 case 7 keeps its fixed 2025-10-01. |
 
 Note: `docs/design_decisions.md` was referenced earlier but does not exist in the repo, on any branch, or in either worktree (`UAS_Project-automation`, `UAS_Project-migration`). The decisions above come from the requests that started each revision. If that file is written later, it should be checked against this table.
 
@@ -643,7 +645,7 @@ One weekly run, one `run_id`, steps in this order. Each step saves raw files bef
 |---|---|---|---|---|
 | **1. Weekly transaction feed** | All PSC 1550, type A–D transactions with `action_date` in the **past 14 days** (D12); `fields` adds `PSC` | `POST /api/v2/search/spending_by_transaction/` (paged) | `contracts_weekly_transactions_all` | `{generated_internal_id, mod}` |
 | **2. Transaction history** | Full history for each award in the step 1 feed | `POST /api/v2/transactions/` (paged until `hasNext` is false) | `contract_transactions` (`discovered_via: "weekly_feed"`) | `transaction_id` |
-| **3. Award search** | FY awards, same filters as `USASpending1` today (2025-10-01 → yesterday); `fields` adds `PSC` (D11) | `POST /api/v2/search/spending_by_award/` (paged) | `contracts` (`source: "award_search"`, `lookup_status: "ok"`) | `generated_internal_id` |
+| **3. Award search** | FY awards, same filters as `USASpending1`: current FY start, or 120 days back if earlier, → yesterday (D21); `fields` adds `PSC` (D11) | `POST /api/v2/search/spending_by_award/` (paged) | `contracts` (`source: "award_search"`, `lookup_status: "ok"`) | `generated_internal_id` |
 | **3b. Coverage pull** | Transaction history for awards whose `last_modified_date` is in the past 7 days and that step 2 didn't already fetch (today's `USASpending2` rule) | `POST /api/v2/transactions/` | `contract_transactions` (`discovered_via: "award_modified"`) | `transaction_id` |
 | **4. Award backfill** | Every distinct `award_key` in `contract_transactions` ∪ `contracts_weekly_transactions_all` that is missing from `contracts`, or present with `lookup_status: "pending"` | `spending_by_award` by key (8.3) | `contracts` (`source: "backfill"`) or a `pending` stub | `generated_internal_id` |
 | **5. Integrity check** | Validation rule 4 (section 5.3) | none | `runs` | n/a |
@@ -704,7 +706,8 @@ Write rules for `contracts` across steps 3 and 4:
   steps: {
     weekly_feed:   { window_days: 14, rows: 14, award_keys: 14, new_rows: 9, late_postings: 1 },
     txn_history:   { awards: 14, inserted: 20, modified: 2, unchanged: 17 },
-    award_search:  { inserted: 3, modified: 40, unchanged: 498, rejected: 0, psc_not_1550: 0, psc_null: 0 },
+    award_search:  { fiscal_year: 2027, start_date: "2026-06-20", end_date: "2026-10-17",
+                     inserted: 3, modified: 40, unchanged: 498, rejected: 0, psc_not_1550: 0, psc_null: 0 },
     coverage_pull: { awards: 6, new_txns_not_in_feed: 1 },
     backfill:      { missing: 7, resolved_unique_id: 7, resolved_award_ids: 0, pending: 0, psc_not_1550: 0 },
     integrity:     { unresolved_award_keys: 0 }
@@ -817,3 +820,4 @@ These stay open until you confirm them. Nothing elsewhere in the doc depends on 
 2. **Coverage pull review (D19):** revisit after a few more weekly runs.
 3. **`award_unique_id` filter outcome:** pending your report from the section 9.1 test. It decides the primary backfill method (8.3).
 4. **`PSC` value shape:** pending your report from the section 9.1 responses. It decides how the loader extracts `psc_code` (3.4.3).
+5. **Reminder, around 2027-01-15: load the FY2026 bulk CSVs.** `contracts_past` / `contracts_past_transactions` (3.5, 3.6) stop at FY2025 (`load_contracts_past.py` `YEARS = range(2020, 2026)`), so the notebook's historical baseline excludes FY2026. Wait until FY2026 has closed out, past DoD's ~90-day publication delay, then download the FY2026 PSC 1550 bulk files, extend `YEARS` to include 2026 (or make it an argument), take `@pre-` snapshots of `uaspool/mongo` and `uaspool/raw`, and run the load. Then retitle 3.5 and check the notebook's `fy_range` label reads FY2020–2026.

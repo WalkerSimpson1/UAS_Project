@@ -6,9 +6,9 @@
     python scripts/usaspending_loader.py --only-award-unique-id-test
 
 Run order (D7): 1 weekly transaction feed (14 days, D12) -> 2 transaction
-history for those awards -> 3 FY award search -> 3b coverage pull (awards
-modified in the past 7 days that step 2 didn't fetch) -> 4 award backfill ->
-5 integrity check. Every response is saved under $RAW_ROOT/usaspending/ before
+history for those awards -> 3 FY award search (current FY, at least 120 days
+back, D21) -> 3b coverage pull (awards modified in the past 7 days that step 2
+didn't fetch) -> 4 award backfill -> 5 integrity check. Every response is saved under $RAW_ROOT/usaspending/ before
 it is loaded. All writes are upserts keyed on _id, so re-running is safe.
 
 --backfill-method auto (default) uses award_unique_id only if the most recent
@@ -26,15 +26,18 @@ import requests
 from pymongo import UpdateOne
 
 from mongo_common import (
-    RawStore, add_counts, bulk, day, days_ago, get_db, piid_from_award_key, psc_code_from,
-    to_datetime, to_float, txn_key_from_transaction_id, valid_award_key,
+    RawStore, add_counts, bulk, day, days_ago, fiscal_year, fy_start, get_db, piid_from_award_key,
+    psc_code_from, to_datetime, to_float, txn_key_from_transaction_id, valid_award_key,
 )
 from mongo_indexes import create_indexes
 
 API = "https://api.usaspending.gov/api/v2"
 AWARD_TYPES = ["A", "B", "C", "D"]
-FY_START = "2025-10-01"
 FEED_DAYS = 14          # D12
+# The award search covers the current FY, reaching back at least this many
+# days so the prior FY's late postings (DoD publishes with a ~90-day delay)
+# are still picked up early in a new FY (D21).
+AWARD_SEARCH_MIN_DAYS = 120
 COVERAGE_DAYS = 7       # today's USASpending2 rule
 NEEDS_ATTENTION_ATTEMPTS = 4
 
@@ -296,13 +299,15 @@ class WeeklyRun:
     # ------------------------------------------------------------ step 3
 
     def award_search(self):
+        start = min(fy_start(self.run_date), days_ago(AWARD_SEARCH_MIN_DAYS, self.run_date))
+        time_period = {"start_date": start.isoformat(), "end_date": days_ago(1, self.run_date).isoformat()}
         body = {
             "subawards": False,
             "limit": 100,
             "filters": {
                 "award_type_codes": AWARD_TYPES,
                 "psc_codes": ["1550"],
-                "time_period": [{"start_date": FY_START, "end_date": days_ago(1, self.run_date).isoformat()}],
+                "time_period": [time_period],
             },
             "fields": AWARD_FIELDS,
         }
@@ -325,6 +330,7 @@ class WeeklyRun:
         }, upsert=True) for d in docs]
         counts = bulk(self.db.contracts, ops)
         self.steps["award_search"] = {
+            "fiscal_year": fiscal_year(self.run_date), **time_period,
             **counts, "results": len(docs), "rejected": rejected,
             "psc_not_1550": sum(1 for d in docs if d["psc_code"] not in (None, "1550")),
             "psc_null": sum(1 for d in docs if d["psc_code"] is None),
@@ -453,7 +459,8 @@ class WeeklyRun:
             (4, "CONT_AWD_19GT5026P0853_1900_-NONE-_-NONE-", "award", None, "one"),
             (5, "CONT_AWD_DOESNOTEXIST_0000_-NONE-_-NONE-", "award", None, "zero"),
             (6, "cont_awd_w91qvn26pa017_9700_-none-_-none-", "award", None, "record"),
-            (7, "CONT_AWD_W911QY19F0431_9700_W911QY18D0192_9700", "award", FY_START, "record"),
+            # Fixed start, as specified in 9.1, so results stay comparable across runs.
+            (7, "CONT_AWD_W911QY19F0431_9700_W911QY18D0192_9700", "award", "2025-10-01", "record"),
             (8, "CONT_AWD_W91ZRS26FC010_9700_47QSMS25D008P_4732", "transaction", None, "only_key"),
         ]
         results = []
