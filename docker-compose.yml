@@ -1,0 +1,40 @@
+# Local stack (docs/DECISIONS.md P1-P4).
+#
+#   docker compose up -d postgres                  # the database
+#   docker compose --profile migrate up -d mongo   # temporary: read the old mongodump (P3)
+#
+# Ports bind to 127.0.0.1 only. Secrets come from .env (see .env.example).
+name: uas
+
+services:
+  postgres:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-uas_tracker}
+      POSTGRES_USER: ${POSTGRES_USER:-uas}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+      - ./db/migrations:/migrations:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      retries: 10
+
+  # Only for the one-time move off MongoDB: restore the last mongodump here,
+  # copy it into Postgres, then remove it (docker compose --profile migrate down -v).
+  mongo:
+    image: mongo:8
+    profiles: ["migrate"]
+    ports:
+      - "127.0.0.1:27017:27017"
+    volumes:
+      - mongodata:/data/db
+      - ./data/import:/import:ro
+
+volumes:
+  pgdata:
+  mongodata:

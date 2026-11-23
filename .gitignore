@@ -169,7 +169,6 @@ venv.bak/
 .ropeproject
 
 # mkdocs documentation
-/site
 
 # mypy
 .mypy_cache/
@@ -232,3 +231,6 @@ legiscan_getDatasetRaw_data/
 # Cut-over (docs/mongodb_schema.md 6.3, 9): MongoDB is the system of record.
 # The final SQLite DB is archived at /uaspool/backups/UAS_Tracker-final.db.
 UAS_Tracker.db
+
+# Local data for the Docker stack (raw API files, imports, backups)
+/data/

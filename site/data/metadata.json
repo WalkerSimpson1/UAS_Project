@@ -1,0 +1,110 @@
+{
+ "title": "U.S. Drone Policy Tracker: public data",
+ "description": "Exported 2026-11-23. Sources: LegiScan, Federal Register, Regulations.gov, USASpending.gov. Policy groupings and tracks by the author.",
+ "databases": {
+  "uas_public": {
+   "tables": {
+    "tracks": {
+     "description": "Loose groupings of related policies."
+    },
+    "policies": {
+     "description": "One thing analyzed: a bill with its companions, a rulemaking with its documents, an executive action."
+    },
+    "policy_tracks": {
+     "description": "Which tracks each policy is in. assigned_by: rule, ai or human; confirmed = reviewed by the author."
+    },
+    "policy_sources": {
+     "description": "Which bills or regulatory documents make up each policy."
+    },
+    "policy_events": {
+     "description": "What changed, per policy. event_date = when it happened; detected_on = when the pipeline found it."
+    },
+    "bills": {
+     "description": "Drone-related bills in the 119th Congress (LegiScan). status: 1 introduced, 2 engrossed, 3 enrolled, 4 passed."
+    },
+    "bill_sponsors": {
+     "description": "Sponsors and cosponsors. primary_sponsor = the bill's sponsor."
+    },
+    "bill_actions": {
+     "description": "Every recorded action on each bill."
+    },
+    "regulatory_documents": {
+     "description": "Federal Register (fr:) and Regulations.gov (rg:) documents."
+    },
+    "regulatory_comments": {
+     "description": "Public comments on tracked dockets (organization only; details fill in over time)."
+    },
+    "contract_awards": {
+     "description": "Drone (PSC 1550) awards from the weekly USASpending pull: current and recent fiscal years."
+    },
+    "contract_actions_recent": {
+     "description": "Contract actions from the weekly 14-day feed (posted late = more than 7 days after the action date)."
+    },
+    "bulk_awards": {
+     "description": "Complete PSC 1550 awards from USASpending bulk downloads, FY2020 on."
+    },
+    "bulk_transactions": {
+     "description": "Every PSC 1550 contract transaction from the bulk downloads, FY2020 on. Use this for market totals."
+    }
+   },
+   "queries": {
+    "this_week": {
+     "title": "What changed in the past 7 days",
+     "sql": "select e.event_date, p.title, e.event_type, e.summary\nfrom policy_events e join policies p on p.id = e.policy_id\nwhere e.detected_on >= date('now', '-7 days') and p.status <> 'not_relevant'\norder by e.event_date desc"
+    },
+    "policies_by_track": {
+     "title": "Policies per track",
+     "sql": "select t.name, count(*) as policies, sum(p.kind = 'bill') as bills, sum(p.kind = 'rulemaking') as rulemakings\nfrom policy_tracks pt join tracks t on t.slug = pt.track_slug join policies p on p.id = pt.policy_id\nwhere p.status <> 'not_relevant' group by t.name order by policies desc"
+    },
+    "track_policies": {
+     "title": "Everything in one track, latest change first",
+     "sql": "select p.title, p.kind,\n       (select max(event_date) from policy_events e where e.policy_id = p.id) as last_change\nfrom policies p join policy_tracks pt on pt.policy_id = p.id\nwhere pt.track_slug = :track and p.status <> 'not_relevant'\norder by last_change desc"
+    },
+    "bills_moving": {
+     "title": "Bills that moved past introduction",
+     "sql": "select identifier, title, case status when 2 then 'passed one chamber' when 3 then 'enrolled'\n       when 4 then 'law' else status end as stage, status_date, url\nfrom bills where status >= 2 order by status_date desc"
+    },
+    "top_sponsors": {
+     "title": "Members sponsoring the most drone bills",
+     "sql": "select name, party, count(*) as bills, sum(primary_sponsor) as as_primary\nfrom bill_sponsors group by name, party order by bills desc limit 25"
+    },
+    "party_split": {
+     "title": "Partisan mix of each bill's sponsors",
+     "sql": "select identifier, sum(party = 'R') as r, sum(party = 'D') as d, count(*) as total,\n       case when sum(party = 'R') > 0 and sum(party = 'D') > 0 then 'bipartisan' else 'one party' end as mix\nfrom bill_sponsors group by identifier order by total desc"
+    },
+    "open_comment_periods": {
+     "title": "Comment periods still open",
+     "sql": "select comments_close, agencies, title, html_url from regulatory_documents\nwhere comments_close >= date('now') order by comments_close"
+    },
+    "who_comments": {
+     "title": "Organizations commenting most across dockets",
+     "sql": "select organization, count(*) as comments, count(distinct docket_id) as dockets\nfrom regulatory_comments where organization is not null and organization <> ''\ngroup by organization order by comments desc limit 25"
+    },
+    "obligations_by_fy": {
+     "title": "Drone contract obligations by fiscal year",
+     "sql": "select fiscal_year, round(sum(federal_action_obligation) / 1e6, 1) as obligated_millions, count(*) as transactions\nfrom bulk_transactions group by fiscal_year order by fiscal_year"
+    },
+    "top_agencies": {
+     "title": "Top buying agencies by fiscal year",
+     "sql": "select fiscal_year, awarding_agency_name, round(sum(federal_action_obligation) / 1e6, 1) as millions\nfrom bulk_transactions group by fiscal_year, awarding_agency_name\nhaving millions > 1 order by fiscal_year desc, millions desc"
+    },
+    "top_vendors": {
+     "title": "Top vendors, all years",
+     "sql": "select recipient_name, round(sum(federal_action_obligation) / 1e6, 1) as millions,\n       count(distinct award_key) as awards, min(fiscal_year) as first_fy, max(fiscal_year) as last_fy\nfrom bulk_transactions group by recipient_name order by millions desc limit 25"
+    },
+    "competition_trend": {
+     "title": "Share of dollars awarded through competition, by fiscal year",
+     "sql": "select fiscal_year,\n       round(100.0 * sum(case when extent_competed like '%COMPET%' and extent_competed not like 'NOT %'\n                              then federal_action_obligation else 0 end) / sum(federal_action_obligation), 1)\n         as pct_dollars_competed\nfrom bulk_transactions where extent_competed is not null group by fiscal_year order by fiscal_year"
+    },
+    "counter_uas_contracts": {
+     "title": "Counter-drone contracts",
+     "sql": "select action_date, recipient_name, awarding_agency_name, round(federal_action_obligation) as amount, description\nfrom bulk_transactions\nwhere description like '%COUNTER-UAS%' or description like '%COUNTER UAS%' or description like '%C-UAS%'\n   or description like '%CUAS%' or description like '%COUNTER-SUAS%' or description like '%COUNTER SUAS%'\n   or description like '%COUNTER-DRONE%' or description like '%COUNTER DRONE%' or description like '%COUNTER%UNMANNED%'\norder by action_date desc"
+    },
+    "foreign_origin": {
+     "title": "Drone purchases by country of origin",
+     "sql": "select fiscal_year, coalesce(country_of_product_or_service_origin, 'unknown') as origin,\n       round(sum(federal_action_obligation) / 1e6, 2) as millions\nfrom bulk_transactions group by fiscal_year, origin order by fiscal_year desc, millions desc"
+    }
+   }
+  }
+ }
+}

@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>U.S. Drone Policy Tracker</title>
+<meta name="description" content="Weekly changes in U.S. drone (UAS) legislation, rulemaking and federal contracts.">
+<style>
+  :root {
+    color-scheme: light;
+    --surface-0: #f6f5f2; --surface-1: #fcfcfb; --border: #e2e0da; --grid: #ebe9e4;
+    --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #6f6e69;
+    --series-1: #2a78d6; --accent: #1c5cab; --chip: #eef3fb;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --surface-0: #121211; --surface-1: #1a1a19; --border: #33332f; --grid: #2a2a27;
+      --text-primary: #f0efec; --text-secondary: #c3c2b7; --text-muted: #9a998f;
+      --series-1: #3987e5; --accent: #86b6ef; --chip: #1f2a3a;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-0: #121211; --surface-1: #1a1a19; --border: #33332f; --grid: #2a2a27;
+    --text-primary: #f0efec; --text-secondary: #c3c2b7; --text-muted: #9a998f;
+    --series-1: #3987e5; --accent: #86b6ef; --chip: #1f2a3a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--surface-0); color: var(--text-primary);
+         font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 1100px; margin: 0 auto; padding: 24px 20px 64px; }
+  header { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; }
+  h1 { font-size: 26px; margin: 0; letter-spacing: -0.01em; }
+  h2 { font-size: 18px; margin: 0 0 4px; }
+  h3.sm { font-size: 15px; margin: 10px 0 6px; }
+  .sub { color: var(--text-secondary); margin: 2px 0 0; }
+  .muted { color: var(--text-muted); font-size: 13px; }
+  section { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px;
+            padding: 18px 20px; margin-top: 18px; }
+  a { color: var(--accent); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; font-weight: 600; color: var(--text-secondary); font-size: 12px; text-transform: uppercase;
+       letter-spacing: .04em; border-bottom: 1px solid var(--border); padding: 8px 8px 6px 0; }
+  td { border-bottom: 1px solid var(--grid); padding: 8px 8px 8px 0; vertical-align: top; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .chip { display: inline-block; background: var(--chip); color: var(--text-primary); border-radius: 999px;
+          padding: 1px 9px; font-size: 12px; margin: 1px 4px 1px 0; white-space: nowrap; }
+  .type { font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; margin-top: 10px; }
+  .card { border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
+  .card h3 { margin: 0 0 4px; font-size: 15px; }
+  .card .n { font-size: 22px; font-weight: 650; }
+  .filters { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+  .filters button { font: inherit; font-size: 13px; border: 1px solid var(--border); background: var(--surface-1);
+                    color: var(--text-primary); border-radius: 999px; padding: 3px 11px; cursor: pointer; }
+  .filters button[aria-pressed="true"] { background: var(--text-primary); color: var(--surface-1); }
+  .two { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+  @media (max-width: 800px) { .two { grid-template-columns: 1fr; } }
+  .chart { position: relative; }
+  .chart svg { width: 100%; height: 240px; display: block; }
+  .tip { position: absolute; pointer-events: none; background: var(--surface-1); border: 1px solid var(--border);
+         border-radius: 6px; padding: 6px 9px; font-size: 13px; box-shadow: 0 2px 8px rgba(0,0,0,.12);
+         opacity: 0; transition: opacity .1s; white-space: nowrap; }
+  .empty { color: var(--text-muted); padding: 10px 0; }
+  details summary { cursor: pointer; color: var(--text-secondary); font-size: 13px; margin-top: 8px; }
+  footer { margin-top: 28px; color: var(--text-muted); font-size: 13px; }
+  .scroll { max-height: 520px; overflow: auto; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>U.S. Drone Policy Tracker</h1>
+      <p class="sub">What changed in drone legislation, rulemaking and federal contracting, updated weekly. <a href="query.html">Query the data</a>.</p>
+    </div>
+    <div class="muted" id="updated"></div>
+  </header>
+
+  <section id="week">
+    <h2>This week</h2>
+    <p class="muted">Changes the pipeline found in the past 7 days. Dates are when the action happened.</p>
+    <div id="week-body"></div>
+  </section>
+
+  <section id="tracks">
+    <h2>Tracks</h2>
+    <p class="muted">Loose groupings of related policies. Each links to its analysis page when one is published.</p>
+    <div class="grid" id="track-cards"></div>
+  </section>
+
+  <section id="contracts">
+    <h2>Federal drone contracts (PSC 1550)</h2>
+    <p class="muted">Market evidence: what agencies are buying. Source: USASpending.gov.</p>
+    <div class="two">
+      <div>
+        <h3 class="sm">Obligations by month, FY2020–FY2026</h3>
+        <div class="chart" id="obl-chart"><svg role="img" aria-labelledby="obl-title"><title id="obl-title">Monthly obligations for drone contracts</title></svg><div class="tip"></div></div>
+        <p class="muted" style="margin:4px 0 0">USASpending bulk data. Recent months fill in as agencies post (DoD reports about 90 days late).</p>
+        <details><summary>Show as table</summary><div class="scroll" id="obl-table"></div></details>
+      </div>
+      <div>
+        <h3 class="sm">Top recipients, this fiscal year</h3>
+        <div id="recipients"></div>
+      </div>
+    </div>
+    <h3 class="sm" style="margin-top:18px">Contract actions, last 60 days</h3>
+    <div class="scroll" id="actions"></div>
+  </section>
+
+  <section id="policies">
+    <h2>All tracked policies</h2>
+    <div class="filters" id="policy-filters" role="toolbar" aria-label="Filter by track"></div>
+    <div class="scroll" id="policy-table"></div>
+  </section>
+
+  <footer>
+    Data: LegiScan, Federal Register, Regulations.gov, USASpending.gov. Analysis by the author; event lines are generated
+    from the sources. <span id="run"></span>
+  </footer>
+</main>
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+const money = (n) => n == null ? "" : (Math.abs(n) >= 1e6 ? "$" + (n / 1e6).toFixed(1) + "M"
+                    : Math.abs(n) >= 1e3 ? "$" + Math.round(n / 1e3) + "K" : "$" + Math.round(n));
+const TYPE = { new: "New", status_change: "Action", text_change: "New text", new_document: "New document",
+               comment_period: "Comment period", new_comments: "Comments", other: "Update" };
+let TRACKS = {};
+
+async function load(name) { const r = await fetch(`data/${name}.json`); return r.json(); }
+
+function trackChips(slugs) {
+  return (slugs || []).map((s) => `<span class="chip">${esc(TRACKS[s]?.name || s)}</span>`).join("");
+}
+function policyLink(p) {
+  const url = p.analysis_url || p.bill_url || p.document_url;
+  return url ? `<a href="${esc(url)}">${esc(p.title)}</a>` : esc(p.title);
+}
+
+function renderWeek(rows, policies) {
+  const bySlug = Object.fromEntries(policies.map((p) => [p.slug, p]));
+  if (!rows.length) { $("#week-body").innerHTML = `<p class="empty">No changes this week.</p>`; return; }
+  $("#week-body").innerHTML = `<table><thead><tr><th>Date</th><th>Policy</th><th>Change</th><th>Tracks</th></tr></thead><tbody>${
+    rows.map((r) => `<tr><td class="num">${esc(r.event_date)}</td>
+      <td>${policyLink(bySlug[r.slug] || r)}${r.analysis_url ? ` · <a href="${esc(r.analysis_url)}">analysis</a>` : ""}</td>
+      <td><span class="type">${esc(TYPE[r.event_type] || r.event_type)}</span><br>${esc(r.summary)}</td>
+      <td>${trackChips(r.tracks)}</td></tr>`).join("")}</tbody></table>`;
+}
+
+function renderTracks(tracks) {
+  $("#track-cards").innerHTML = tracks.map((t) => `<div class="card">
+    <h3>${t.substack_url ? `<a href="${esc(t.substack_url)}">${esc(t.name)}</a>` : esc(t.name)}</h3>
+    <div class="n">${t.policies}</div><div class="muted">policies</div>
+    <p style="margin:6px 0 0;font-size:13px;color:var(--text-secondary)">${esc(t.summary)}</p></div>`).join("");
+}
+
+function renderChart(series) {
+  const data = series.map((d) => ({ month: d.month, v: Number(d.obligated) }));
+  const svg = $("#obl-chart svg"), tip = $("#obl-chart .tip");
+  const W = svg.clientWidth || 640, H = 240, m = { t: 10, r: 8, b: 26, l: 52 };
+  const max = Math.max(...data.map((d) => d.v), 1);
+  const step = Math.pow(10, Math.floor(Math.log10(max))), top = Math.ceil(max / step) * step;
+  const y = (v) => m.t + (H - m.t - m.b) * (1 - Math.max(v, 0) / top);
+  const bw = (W - m.l - m.r) / data.length;
+  let g = "";
+  for (let i = 0; i <= 4; i++) {
+    const v = top * i / 4, yy = y(v);
+    g += `<line x1="${m.l}" x2="${W - m.r}" y1="${yy}" y2="${yy}" stroke="var(--grid)"/>`
+       + `<text x="${m.l - 6}" y="${yy + 4}" text-anchor="end" font-size="11" fill="var(--text-muted)">${money(v)}</text>`;
+  }
+  data.forEach((d, i) => {
+    const x = m.l + i * bw, h = y(0) - y(d.v), w = Math.max(bw - 2, 1), r = Math.min(4, w / 2, h);
+    if (h > 0) g += `<path d="M${x + 1},${y(0)} v${-(h - r)} q0,${-r} ${r},${-r} h${w - 2 * r} q${r},0 ${r},${r} v${h - r} z" fill="var(--series-1)"/>`;
+    if (d.month.endsWith("-10")) g += `<text x="${x + bw / 2}" y="${H - 8}" text-anchor="middle" font-size="11" fill="var(--text-muted)">FY${Number(d.month.slice(2, 4)) + 1}</text>`;
+    g += `<rect data-i="${i}" x="${x}" y="${m.t}" width="${bw}" height="${H - m.t - m.b}" fill="transparent"/>`;
+  });
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.insertAdjacentHTML("beforeend", g);
+  svg.addEventListener("mousemove", (e) => {
+    const i = e.target.dataset?.i; if (i == null) { tip.style.opacity = 0; return; }
+    const d = data[i];
+    tip.innerHTML = `<strong>${d.month}</strong><br>${money(d.v)} obligated`;
+    const box = svg.getBoundingClientRect();
+    tip.style.left = Math.min(e.clientX - box.left + 12, box.width - 140) + "px";
+    tip.style.top = (e.clientY - box.top - 40) + "px"; tip.style.opacity = 1;
+  });
+  svg.addEventListener("mouseleave", () => (tip.style.opacity = 0));
+  $("#obl-table").innerHTML = `<table><thead><tr><th>Month</th><th class="num">Obligated</th></tr></thead><tbody>${
+    series.slice().reverse().map((d) => `<tr><td>${d.month}</td><td class="num">${money(Number(d.obligated))}</td></tr>`).join("")}</tbody></table>`;
+}
+
+function renderRecipients(rows) {
+  $("#recipients").innerHTML = rows.length ? `<table><thead><tr><th>Recipient</th><th class="num">Awards</th><th class="num">Value</th></tr></thead><tbody>${
+    rows.map((r) => `<tr><td>${esc(r.recipient)}</td><td class="num">${r.awards}</td><td class="num">${money(r.amount)}</td></tr>`).join("")}</tbody></table>`
+    : `<p class="empty">No awards yet this fiscal year.</p>`;
+}
+
+function renderActions(rows) {
+  $("#actions").innerHTML = `<table><thead><tr><th>Date</th><th>Recipient</th><th>Agency</th><th>Description</th><th class="num">Amount</th></tr></thead><tbody>${
+    rows.map((r) => `<tr><td class="num">${esc(r.action_date)}</td><td>${esc(r.recipient_name)}</td><td>${esc(r.awarding_agency)}</td>
+      <td><a href="${esc(r.url)}">${esc(r.transaction_description)}</a>${r.counter_uas ? ` <span class="chip">counter-UAS</span>` : ""}${r.late_posting ? ` <span class="muted">(posted late)</span>` : ""}</td>
+      <td class="num">${money(r.transaction_amount)}</td></tr>`).join("")}</tbody></table>`;
+}
+
+function renderPolicies(policies, tracks) {
+  let current = null;
+  const draw = () => {
+    const list = current ? policies.filter((p) => p.tracks.includes(current)) : policies;
+    $("#policy-table").innerHTML = `<table><thead><tr><th>Policy</th><th>Type</th><th>Latest</th><th>Tracks</th></tr></thead><tbody>${
+      list.map((p) => `<tr><td>${policyLink(p)}${p.analysis_url ? ` · <a href="${esc(p.analysis_url)}">analysis</a>` : ""}</td>
+        <td class="type">${esc(p.kind.replace("_", " "))}</td>
+        <td>${p.latest ? `<span class="muted">${esc(p.latest.date)}</span> ${esc(p.latest.summary)}` : ""}</td>
+        <td>${trackChips(p.tracks)}</td></tr>`).join("")}</tbody></table>`;
+    document.querySelectorAll("#policy-filters button").forEach((b) => b.setAttribute("aria-pressed", String((b.dataset.slug || null) === current)));
+  };
+  $("#policy-filters").innerHTML = `<button data-slug="">All (${policies.length})</button>` +
+    tracks.map((t) => `<button data-slug="${esc(t.slug)}">${esc(t.name)}</button>`).join("");
+  $("#policy-filters").addEventListener("click", (e) => { if (e.target.tagName === "BUTTON") { current = e.target.dataset.slug || null; draw(); } });
+  draw();
+}
+
+(async () => {
+  const [meta, weekly, tracks, policies, obl, actions, recipients] = await Promise.all(
+    ["meta", "weekly", "tracks", "policies", "obligations_by_month", "recent_contract_actions", "top_recipients_fy"].map(load));
+  TRACKS = Object.fromEntries(tracks.map((t) => [t.slug, t]));
+  $("#updated").textContent = "Updated " + meta.generated_at.slice(0, 10);
+  if (meta.last_run[0]) $("#run").textContent = `Last pipeline run: ${meta.last_run[0].run_id} (${meta.last_run[0].status}).`;
+  renderWeek(weekly, policies);
+  renderTracks(tracks);
+  renderChart(obl);
+  renderRecipients(recipients);
+  renderActions(actions);
+  renderPolicies(policies, tracks);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+# Decisions: Postgres/Docker restructure (branch `postgres-docker`)
+
+Routine choices made while building, so they can be reviewed later. The old MongoDB decisions (D1–D21) stay in `docs/mongodb_schema.md`.
+
+| # | Date | Decision | Why |
+|---|---|---|---|
+| P1 | 2026-11-23 | Run Postgres 18 in Docker Compose on this Windows laptop, bound to 127.0.0.1. Data lives in the `pgdata` named volume. | You asked for Postgres + Docker. A named volume is faster and safer than a Windows bind mount for database files. |
+| P2 | 2026-11-23 | Raw API files go in `./data/raw` (gitignored), indexed in the `raw_files` table instead of `manifest.jsonl`. | No ZFS on Windows. The repo folder is easy to back up and to browse. |
+| P3 | 2026-11-23 | Move the old data by restoring the last `mongodump` into a temporary `mongo` container (compose profile `migrate`), then copying it into Postgres. | No MongoDB install on Windows; the container is deleted afterwards. |
+| P4 | 2026-11-23 | Schema migrations are plain numbered SQL files in `db/migrations/`, recorded in `schema_migrations`. | Simple, readable, no ORM. |
+| P5 | 2026-11-23 | Source tables renamed for clarity: `legislation` → `bills`, `legislation_history` → `bill_snapshots`, `rulemakings` → `regulatory_documents`, `rulemaking_comments` → `regulatory_comments`, `contracts` → `contract_awards`, `contracts_weekly_transactions_all` → `contract_activity_feed`, `contracts_past*` → `past_awards` / `past_transactions`. | "Rulemaking" now means a policy (one or more documents), so the raw rows need a different name. |
+| P6 | 2026-11-23 | Dates are real `date` / `timestamptz` columns, including the Federal Register and Regulations.gov dates that MongoDB kept as strings. | Postgres compares them correctly. Exact API values remain in `raw`. |
+| P7 | 2026-11-23 | Hand-entered tracker fields (`sequence`, `track`, `event_*`, `notes`) are dropped from the source tables. They were all null, and the analysis layer replaces them. | Tracks now live in `tracks` / `policy_tracks`, and notes live in `analyses`. |
+| P8 | 2026-11-23 | Analysis layer: `tracks` ← `policy_tracks` → `policies` ← `policy_sources` → source rows, plus `analyses`, `policy_events` and `track_rules`. Views `weekly_changes` and `review_queue`. | Matches the new format: tracks hold policies, each policy has one analysis page, and the weekly dashboard is a query. |
+
+## Open (need your input)
+- Where the off-laptop backup goes (OneDrive folder, a GitHub release, or cloud Postgres) now that Atlas is gone.
+- Whether to turn on `--publish` (weekly push of dashboard data to GitHub) and enable Pages.
+- Track list: 9 policies fit no track (mostly surveillance and privacy bills). A "privacy and civil liberties" track?
+
+## Log (continued)
+
+| # | Date | Decision | Why |
+|---|---|---|---|
+| P9 | 2026-11-23 | Imported the 2026-11-23 mongodump with `scripts/migrate_mongo_to_pg.py`. Counts and dollar sums match MongoDB for every table, and all 73 manifest files exist under `data/raw`. Old run log kept in `runs` (`details.mongo_id`). | One-time move (P3). The script refuses to commit if any check fails. |
+| P10 | 2026-11-23 | Python on Windows uses `.venv/Scripts/python`; `psycopg` 3 added to `requirements.txt`. `pymongo` stays until the Mongo container is removed. | Host-side scripts, same as before. |
+
+| P11 | 2026-11-23 | Loaders ported to Postgres and keep their behavior. Changes: the award_unique_id test is dropped (it passed both weeks, so award_unique_id is the default backfill); the Federal Register keeps a document only when a keyword is in its title or abstract; Regulations.gov looks up only docket IDs shaped like `FAA-2024-0025`; LegiScan adds `WATCH_BILLS` (H.R. 8800, S. 4784). | The full-text search caught 22 of 27 irrelevant notices this run; the NDAA's LegiScan title never mentions drones. |
+| P12 | 2026-11-23 | One runner, `scripts/weekly_run.py`, replaces `weekly_run.sh`, `weekly_ingest.py` and systemd. pg_dump before and after replaces ZFS snapshots; on failure it keeps the data and logs the restore command instead of rolling back automatically. | Windows has no ZFS. Every write is an upsert, so a partial run is safe to keep and re-run. |
+| P13 | 2026-11-23 | Task Scheduler task "UAS weekly": daily 19:00 and at logon, catch-up after missed starts. The script skips if a run succeeded in the past 6 days and widens windows after a gap. | The laptop isn't always on. |
+| P14 | 2026-11-23 | `sync_policies.py`: companion bills merge by title (years and punctuation ignored); documents group by docket, RIN or FR number; documents posted 30+ days before we saw them are linked without an event. Events carry `detected_on`, and the weekly dashboard filters on it. Tracks are seeded from the research (migration 003) with title and agency regex rules; a rule only fills a policy with no tracks, so removing one sticks. | Keeps the dashboard to what is new this week, including catch-up finds. |
+| P15 | 2026-11-23 | AI drafts use `claude -p` on the subscription (Sonnet, no tools, JSON schema, run from `data/ai/`), at most 15 per weekly run. Drafts stay private: the public dashboard shows only source-derived lines and links to published analyses. | No API key. The drafts are a starting point; publishing them unreviewed would put unchecked claims under your name. |
+| P16 | 2026-11-23 | The dashboard is static (`site/`, plain HTML/JS, JSON from `export_site.py`) and deploys via GitHub Actions on push to `main`. `weekly_run.py --publish` commits and pushes only `site/data`; the scheduled task runs without it until you turn it on. | Free hosting, no server. Pushing is public, so it's opt-in. |
+| P17 | 2026-11-23 | The contracts chart uses only the complete bulk data (FY2020–FY2025). The weekly pull isn't a market total. | The FY2026 bars were near zero because only touched awards' transactions are in the live tables. |
+| P18 | 2026-11-23 | Removed the Linux/MongoDB files (`systemd/`, `weekly_run.sh`, `dev.sh`, `mongo_common.py`, `mongo_indexes.py`, `weekly_ingest.py`, `backfill_rulemakings.py`, `export_csvs.py`, `load_contracts_past.py`, `migrate_sqlite_to_mongo.py`); they're in git history. The notebook reads Postgres. HB8800 and SB4784 were merged by hand into the policy `fy2027-ndaa`. | Superseded. |
+| P19 | 2026-11-23 | `scripts/backfill.py`: Federal Register Jan 2025–Sep 2026 (3-month chunks), Regulations.gov dockets of those rules (comment details fill in at 300 per weekly run), and the FY2026 USASpending bulk download into `past_*` (re-run `backfill.py contracts --fy <year>` every few months; DoD posts ~90 days late). Coast Guard safety-zone notices are dropped as noise; doubled docket prefixes (`FAA-FAA-`) are normalized. | The tracker started Sep 2026, so the background rules (BVLOS NPRM, export rule, Section 232, Covered List, counter-UAS rule) were missing. Weekly bill snapshots during the pause can't be recovered, but action histories are complete. |
+| P20 | 2026-11-23 | Public query copy: `export_public_db.py` writes `site/data/uas_public.db` (SQLite, ~4 MB) plus `metadata.json` with 14 recommended queries; `site/query.html` opens them in Datasette Lite (runs in the visitor's browser). Built in every weekly run. Excludes AI drafts, notes, raw payloads and commenters' names. | No server to run or secure; anyone can also download the file. |
+
+## Noticed during import
+- The last weekly run was 2026-10-18, so there's a five-week gap. The first new run should use a wider window, like `backfill_rulemakings.py` did.
+- All 4 Federal Register documents are false positives (a DEA privacy notice, Antarctic permits, a heliport waiver, a Lake Michigan safety zone). The keyword search needs tightening when the loader is ported.

@@ -1,0 +1,44 @@
+[
+ {
+  "slug": "bvlos-airspace",
+  "name": "BVLOS and airspace integration",
+  "summary": "FAA Part 108 (beyond visual line of sight), other FAA drone rules, and bills on airspace access, zoning and recreational flying.",
+  "substack_url": null,
+  "policies": 47
+ },
+ {
+  "slug": "counter-uas-authority",
+  "name": "Counter-UAS authority",
+  "summary": "Who may detect, track and take down drones: the SAFER SKIES Act and its rules, and bills extending authority to states, agencies and sites.",
+  "substack_url": null,
+  "policies": 37
+ },
+ {
+  "slug": "fy2027-ndaa",
+  "name": "FY2027 NDAA",
+  "summary": "Drone provisions in the FY2027 National Defense Authorization Act: H.R. 8800 passed the House 216-212; the Senate bill, S. 4784, has not passed.",
+  "substack_url": null,
+  "policies": 31
+ },
+ {
+  "slug": "public-safety",
+  "name": "Public safety use",
+  "summary": "Drones used by police, fire, emergency and land-management agencies.",
+  "substack_url": null,
+  "policies": 23
+ },
+ {
+  "slug": "industrial-base-exports",
+  "name": "Industrial base and exports",
+  "summary": "Domestic drone manufacturing, DoD drone programs and strategy, and export policy for U.S. and allied drones.",
+  "substack_url": null,
+  "policies": 21
+ },
+ {
+  "slug": "foreign-drone-restrictions",
+  "name": "Foreign drone restrictions",
+  "summary": "Import, marketing and procurement limits on foreign-made drones: the FCC Covered List, Section 232 tariffs, and federal purchasing bans.",
+  "substack_url": null,
+  "policies": 19
+ }
+]

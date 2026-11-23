@@ -4,51 +4,44 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-An ETL pipeline that tracks U.S. UAS (drone) policy and federal spending. It pulls data from the LegiScan API, USASpending.gov, the Federal Register API, and the Regulations.gov API into **MongoDB** (`uas_tracker` DB), written by the Python scripts in `scripts/`. `docs/mongodb_schema.md` is the spec (collections, indexes, decisions D1–D20) and the scripts cite its section numbers.
+A U.S. drone (UAS) policy tracker and a government-affairs portfolio piece. A weekly pipeline pulls LegiScan, USASpending.gov (PSC 1550), the Federal Register and Regulations.gov into **PostgreSQL** (Docker, this Windows laptop), turns new and changed items into **policies** sorted into loose **tracks**, drafts a first-pass analysis of each with `claude -p`, and publishes a static dashboard (`site/`, GitHub Pages). The published analyses live on Substack (format: `docs/format.md`).
 
-Cut-over from SQLite happened on 2026-10-11, after one parallel week instead of the two in section 9 (D18). MongoDB is the system of record. The final SQLite DB is archived at `/uaspool/backups/UAS_Tracker-final.db`, `UAS_Tracker.db` is gitignored and untracked, and the SQLite notebooks are deleted (they remain in git history).
+Decisions for this setup are P1+ in `docs/DECISIONS.md`. The MongoDB era (D1–D21) is in `docs/mongodb_schema.md`, kept as history; its code is in git history (branch `main` before the `postgres-docker` work).
 
-There is no test suite or linter. Dependencies are pinned in `requirements.txt`, installed into `.venv/`.
+There is no test suite or linter. Dependencies are pinned in `requirements.txt`, installed into `.venv/` (`.venv/Scripts/python` on Windows).
 
 ## Setup
 
-- `.env` (gitignored) holds `LEGI_API_KEY`, `REGULATIONS_API_KEY` (sent only in the `X-Api-Key` header; preflight requires it), `MONGO_URI` (default `mongodb://127.0.0.1:27017/`), `MONGO_DB` (default `uas_tracker`), `RAW_ROOT` (default `/uaspool/raw`), and `ATLAS_URI` (the MongoDB Atlas connection string for the off-laptop copy). The USASpending API needs no key. Never print or log these values.
-- ZFS pool `uaspool`: `uaspool/mongo` is mongod's `dbPath`, `uaspool/raw` (mounted at `/uaspool/raw`, outside the repo) holds write-once raw API responses, including the LegiScan zips under `legiscan/<dataset_date>/`, and `uaspool/backups` holds `mongodump` archives.
-- `mongod` runs as a system service, bound to 127.0.0.1.
-- `systemd/install.sh` is a one-time setup that you run as the pipeline user. It sets `zfs allow` snapshot/rollback/mount, a sudoers rule for `systemctl stop|start mongod` and `/usr/local/sbin/uas-zfs-prune`, and linger, and it installs the user units. It does not delegate `zfs destroy`. Pruning goes only through `uas-zfs-prune`, which accepts `@weekly-*` names only.
-- `./dev.sh` opens or attaches a tmux session `uas` with Claude Code, Neovim, and `mongosh` connected to the DB. It reads `MONGO_URI` from the environment or `.env` and keeps it off the command line.
+- `.env` (gitignored, see `.env.example`): `LEGI_API_KEY`, `REGULATIONS_API_KEY` (sent only in the `X-Api-Key` header), `POSTGRES_*`, `DATABASE_URL`, `RAW_ROOT` (default `./data/raw`). Never print or log these values; `pg_common.redact()` strips keys from error text.
+- `docker compose up -d postgres` — Postgres 18, `127.0.0.1:5432`, data in the `pgdata` volume. Docker Desktop should start at login.
+- `.venv/Scripts/python scripts/db_migrate.py` applies `db/migrations/*.sql` in order (each records itself in `schema_migrations`). Add a new numbered file; never edit an applied one.
+- `data/` is gitignored: `raw/` (write-once API responses, indexed in `raw_files`), `backups/` (pg_dump), `logs/`, `ai/` (cwd for `claude -p`), `import/` (the one-time mongodump).
+- Git Bash mangles container paths (`/migrations/...`); use `MSYS_NO_PATHCONV=1` for `docker compose exec`.
 
 ## Weekly run
 
-`weekly_run.sh` runs from the user timer `uas-weekly.timer` (Sundays at 19:00, `Persistent=true`). To run it by hand, use `systemctl --user start uas-weekly.service`, or run `./weekly_run.sh --dry-run` to print the state-changing commands without running them. Logs and per-run state are in `~/.local/state/uas-weekly/` (`logs/`, `runs/<tag>/`). Steps:
+`scripts/weekly_run.py` runs from the Task Scheduler task "UAS weekly" (`scripts/install_task.ps1`: daily 19:00 + at logon, catch-up after missed starts). It exits at once if a weekly run succeeded in the past 6 days, otherwise widens the lookback windows to cover the gap. Steps: preflight → `pre-<date>.dump` → the four loaders (each logs a `runs` row; parent row `pipeline='weekly'`) → `sync_policies` → `summarize` (≤15 drafts, warnings only) → no-table-shrank check → `export_site` (+ commit/push of `site/data` with `--publish`) → `uas_tracker_<date>.dump` (keeps 12). Exit 0 ok, 2 warnings, 1 failed. Logs: `data/logs/weekly-<date>.log`. A failure keeps successful steps' data (all writes are upserts) and logs the `pg_restore` command for the pre dump.
 
-1. Preflight checks (venv, `.env`, ZFS datasets, mongod, sudo rules, an unfinished earlier run), then a wait for the network.
-2. An atomic ZFS snapshot `uaspool/mongo` + `uaspool/raw` `@weekly-<date>-pre`.
-3. `scripts/weekly_ingest.py --legiscan-download`, which runs `legiscan_loader` (it downloads the dataset only when LegiScan has a new one), `usaspending_loader`, and then the rulemaking loaders (`federal_register_loader`, `regulations_loader`). Each one logs to the `runs` collection. A rulemaking loader's `"partial"` (normal under the Regulations.gov rate limit) makes `weekly_ingest.py` exit 2, which is a warning, not a rollback.
-4. Count validation: no collection may shrink, and the required collections must be non-empty.
-5. If any of steps 1–4 fails, the script stops mongod, rolls both datasets back to `-pre`, and starts mongod. If they pass, it takes a `-post` snapshot, writes the CSV exports to the repo root (`export_csvs.py`), writes a `mongodump` to `/uaspool/backups`, and prunes snapshots and dumps (keeping 12 weekly and 12 monthly). A failure after validation is reported (exit 1) but not rolled back. Last, it restores that dump to MongoDB Atlas (`mongorestore --drop`, D20), so Atlas mirrors the local DB. A missing `ATLAS_URI` or a failed restore is a warning (exit 2), not a failure. Atlas holds the documents only; the raw files have no off-laptop copy yet.
+## Code layout (`scripts/`, run from the repo root)
 
-Exit codes: 0 means ok, 1 means failed, and 2 means completed with warnings (the unit treats 2 as success). After a run that died without cleanup, preflight refuses to start and prints the rollback commands. Use `touch ~/.local/state/uas-weekly/resolved/<tag>` once the run is resolved.
-
-## Code layout
-
-- `analysis/USASpending_Past_Visualizations.ipynb`: fiscal-week/month obligation charts, `weekly_rank()` and competition trends, read from MongoDB (`contracts_past_transactions`, `contracts_weekly_transactions_all`) through `mongo_common.get_db()`. Run it from inside `analysis/`. It only reads; `weekly_run.sh` does not run it.
-- `scripts/` (MongoDB): run them from the repo root with `.venv/bin/python`. `mongo_common.py` holds the shared config and helpers. Every loader saves the raw response under `$RAW_ROOT` before loading it, and its writes are upserts or `$setOnInsert`, so re-running a loader is safe.
-  - `weekly_ingest.py`: the weekly entry point.
-  - `legiscan_loader.py` loads `legislation_history` (one snapshot per bill per week) and `legislation` (latest state).
-  - `usaspending_loader.py`: transactions first (14-day lookback), then the award search, the coverage pull, the award backfill, and an integrity check (D6, D7). The coverage pull (step 3b) is kept for now and flagged for review (D19).
-  - `federal_register_loader.py` searches six UAS keyword phrases over a 9-day `publication_date` window and upserts into `rulemakings` with `_id` `fr:<document_number>` (D17). `--start/--end` override the window.
-  - `regulations_loader.py` loads the Regulations.gov dockets of the Federal Register documents seen this run into `rulemakings` (`rg:<documentId>`) and their comments into `rulemaking_comments` (`rgc:<commentId>`). Comment details cost one request per comment (1000 requests/hour), so at most `--max-comment-details` (300) are fetched per run and the rest wait for later runs. `--docket ID` loads one docket for testing.
-  - `backfill_rulemakings.py` runs the rulemaking loaders over a wider window (default 14 days). It runs outside `weekly_run.sh`, so it requires `uaspool/mongo` and `uaspool/raw` `@pre-rulemakings-backfill` snapshots to exist first.
-  - `mongo_indexes.py`, `migrate_sqlite_to_mongo.py`, `load_contracts_past.py`: setup and one-time loads.
-  - `export_csvs.py --out-dir DIR`: CSV exports from MongoDB. `weekly_run.sh` passes the repo root, and those files are the committed exports.
+- `pg_common.py`: config, `connect()`, date helpers, `RawStore` (raw file + `raw_files` row via its own autocommit connection), `start_run`/`finish_run`, `upsert()` (keeps an unchanged row's `raw_source`), `read_sql()`.
+- Loaders (source tables only, each safe to re-run): `legiscan_loader.py` (bills, bill_snapshots; keyword filter + `WATCH_BILLS`), `usaspending_loader.py` (contract_activity_feed, contract_transactions, contract_awards; steps run in their own transactions), `federal_register_loader.py` (keeps a document only if a keyword is in its title/abstract: `is_relevant`), `regulations_loader.py` (dockets of this run's FR documents; comment details capped per run by the 1000/hour limit).
+- `sync_policies.py`: source rows → `policies` / `policy_sources` (companion bills by title; documents by docket/RIN/FR number), `policy_events` (unique per policy/date/type/source), `analyses` rows, rule-based `policy_tracks`.
+- `summarize.py`: `claude -p --tools "" --json-schema ...` with a per-kind fact sheet; writes `analyses.ai_*`, sets `ai_drafted`, adds `assigned_by='ai'` track suggestions. Never overwrites human fields.
+- `export_public_db.py`: `site/data/uas_public.db` + `metadata.json` (recommended queries) for `site/query.html` / Datasette Lite.
+- `backfill.py`: one-off FR / Regulations.gov / bulk-contracts backfills (P19).
+- `export_site.py`: `site/data/*.json` for `site/index.html`. Public output excludes AI drafts; it shows source-derived event lines and links to published analyses only.
+- `migrate_mongo_to_pg.py`: the one-time import (done 2026-11-23, P9).
+- `analysis/USASpending_Past_Visualizations.ipynb` reads Postgres via `pg_common.read_sql`.
 
 ## Data notes
 
-- Fiscal year: the FY starts Oct 1, and FY = calendar year + 1 for Oct–Dec.
-- There are no hand-entered rows: every document in `legislation` and `rulemakings` comes from an API. The code still supports hand rows (in `rulemakings`, a hand row would have no `source` field), but none exist, and the hand-maintained fields (`sequence`, `track`, `event_date`, `event_description`, `notes`) are all null. API documents in `rulemakings` have `source` and a prefixed `_id` (`fr:`, or `rg:` for Regulations.gov). `Exported_Rulemakings.csv` exports hand rows only, so it has no data rows.
-- The live-API `contracts*` tables and the bulk-CSV `contracts_past*` tables use different keys (`api_internal_id`/`award_key` vs `contract_award_unique_key`). See schema doc section 5 before joining them.
+- Fiscal year starts Oct 1 (`pg_common.fiscal_year`).
+- Postgres regex word boundary is `\y`, not `\b` (track_rules).
+- `past_*` tables are the bulk downloads, FY2020 on (FY2026+ via `backfill.py contracts`); the live `contract_*` tables only hold transactions on awards the pipeline touched, so don't sum them as a market total.
+- Human workflow lives in the analysis tables: review `review_queue`, edit `analyses` (status → `in_review` / `published` / `not_relevant`, `substack_url`), confirm or change `policy_tracks`. `not_relevant` policies drop off the dashboard.
 
 ## Repo conventions
 
-- Weekly commits ("Weekly run <date> exports") contain **only the CSV exports** that `export_csvs.py` writes: `Exported_SQL_Legislation_Table.csv`, `Exported_SQL_Contracts_Table.csv`, `Exported_Contract_Transactions.csv`, `Exported_Legislation_Current.csv`, `Exported_Rulemakings.csv`. Do not commit `UAS_Tracker.db` (D3) or raw zips/API responses (D15). Raw data lives on `/uaspool/raw`, and backups come from ZFS snapshots and `mongodump`.
+- Commit code and `site/` (the dashboard data commits are "Weekly dashboard data <date>"). Never commit `.env`, `data/`, or dumps.
+- Log routine design choices in `docs/DECISIONS.md` instead of asking.
