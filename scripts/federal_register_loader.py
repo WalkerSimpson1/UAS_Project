@@ -48,14 +48,25 @@ class ApiError(Exception):
     pass
 
 
-# Coast Guard safety zones for drone shows and fireworks mention drones but aren't policy.
-NOISE_RE = re.compile(r"^(Safety Zones?|Annual Fireworks|Special Local Regulations?)\b", re.IGNORECASE)
+# Not policy: Coast Guard drone-show safety zones, advisory-committee and EIS notices, and rules that only list drones in passing.
+NOISE_RE = re.compile(r"^(Safety Zones?|Annual Fireworks|Special Local Regulations?)\b|Federal Advisory Committee"
+                      r"|Environmental Impact Statement|Stablecoin|Regulation for Federal Financial Assistance", re.IGNORECASE)
 
 
-def is_relevant(title: str | None, abstract: str | None) -> bool:
-    if NOISE_RE.match(title or ""):
+# Defense and trade-control agencies (P23): their documents are kept when the full-text
+# search found a drone term anywhere, even if the title and abstract don't mention one.
+DEFENSE_AGENCY_RE = re.compile(
+    r"^(Defense Department|Defense Acquisition Regulations System|Army Department|Navy Department"
+    r"|Air Force Department|Industry and Security Bureau|Foreign Assets Control Office"
+    r"|Trade Representative, Office of United States)$", re.IGNORECASE)
+
+
+def is_relevant(title: str | None, abstract: str | None, agencies=None) -> bool:
+    if NOISE_RE.search(title or ""):
         return False
-    return bool(RELEVANT_RE.search(f"{title or ''} {abstract or ''}"))
+    if RELEVANT_RE.search(f"{title or ''} {abstract or ''}"):
+        return True
+    return any(DEFENSE_AGENCY_RE.match(a or "") for a in agencies or [])
 
 
 def get(session, params, pause=0.2, retries=3) -> dict:
@@ -143,7 +154,7 @@ def ingest(conn, start=None, end=None, run_date=None, run_tag=None, parent_id=No
                 if phrase not in phrases:
                     phrases.append(phrase)
 
-        kept = {n: v for n, v in matched.items() if is_relevant(v[0].get("title"), v[0].get("abstract"))}
+        kept = {n: v for n, v in matched.items() if is_relevant(v[0].get("title"), v[0].get("abstract"), v[0].get("agency_names"))}
         old_kw = dict(conn.execute("SELECT id, matched_keywords FROM regulatory_documents WHERE id = ANY(%s)",
                                    ([f"fr:{n}" for n in kept],)).fetchall())
         new = 0

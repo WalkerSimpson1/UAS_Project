@@ -1,39 +1,10 @@
 [
  {
-  "slug": "60-day-notice-of-proposed-information-collection-information-collection-request",
-  "kind": "other",
-  "title": "60-Day Notice of Proposed Information Collection: Information Collection Request (ICR) for the Drone Infrastructure Inspection Grant (DIIG) Program",
-  "tracks": [],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2026/09/01/2026-17776/60-day-notice-of-proposed-information-collection-information-collection-request-icr-for-the-drone",
-  "latest": {
-   "date": "2026-11-23",
-   "summary": "3 new public comments on DOT-OST-2026-3367"
-  }
- },
- {
-  "slug": "sb4768-a-bill-to-provide-for-a-requirement-for-networked-autonomous-kinetic-capa",
-  "kind": "bill",
-  "title": "A bill to provide for a requirement for networked autonomous kinetic capability against small unmanned aircraft systems.",
-  "tracks": [
-   "counter-uas-authority",
-   "fy2027-ndaa",
-   "industrial-base-exports"
-  ],
-  "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/senate-bill/4768/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-09-11",
-   "summary": "SB4768 now tracked. Latest action: Read twice and referred to the Committee on Armed Services. (2026-06-11)"
-  }
- },
- {
   "slug": "sb5340-a-bill-to-require-a-drone-posture-review",
   "kind": "bill",
   "title": "A bill to require a drone posture review.",
   "tracks": [
+   "defense-drones",
    "fy2027-ndaa",
    "industrial-base-exports"
   ],
@@ -50,6 +21,7 @@
   "kind": "bill",
   "title": "A bill to require a report on the advisability and feasibility of establishing a Drone Center of Excellence within the Army National Guard.",
   "tracks": [
+   "defense-drones",
    "fy2027-ndaa",
    "industrial-base-exports"
   ],
@@ -62,224 +34,41 @@
   }
  },
  {
-  "slug": "sb3262-a-bill-to-require-the-secretary-of-defense-to-develop-and-implement-a-str",
-  "kind": "bill",
-  "title": "A bill to require the Secretary of Defense to develop and implement a strategy to field an integrated air defense system to bolster the capability of NATO to defeat unmanned aerial systems and deter Russian aggression, and for other purposes.",
-  "tracks": [
-   "counter-uas-authority",
-   "fy2027-ndaa",
-   "industrial-base-exports"
-  ],
-  "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/senate-bill/3262/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-09-11",
-   "summary": "SB3262 now tracked. Latest action: Read twice and referred to the Committee on Foreign Relations. (2025-11-20)"
-  }
- },
- {
-  "slug": "accepted-means-of-compliance-for-small-unmanned-aircraft-sua-category-2-and-cate",
+  "slug": "additions-and-modifications-to-the-entity-list",
   "kind": "rulemaking",
-  "title": "Accepted Means of Compliance for Small Unmanned Aircraft (sUA) Category 2 and Category 3 Operations Over Human Beings; ParaZero Technologies Ltd. (ParaZero)",
+  "title": "Additions and Modifications to the Entity List",
   "tracks": [
-   "bvlos-airspace"
+   "defense-drones"
   ],
   "analysis_url": null,
   "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2026/03/02/2026-04077/accepted-means-of-compliance-for-small-unmanned-aircraft-sua-category-2-and-category-3-operations",
+  "document_url": "https://www.federalregister.gov/documents/2025/03/28/2025-05426/additions-and-modifications-to-the-entity-list",
   "latest": null
  },
  {
-  "slug": "accepted-means-of-compliance-for-small-unmanned-sua-aircraft-category-2-and-cate",
+  "slug": "additions-to-the-entity-list",
   "kind": "rulemaking",
-  "title": "Accepted Means of Compliance for Small Unmanned (sUA) Aircraft Category 2 and Category 3 Operations Over Human Beings; Aerial Vehicle Safety Solutions Inc. (AVSS)",
+  "title": "Additions to the Entity List",
   "tracks": [
-   "bvlos-airspace"
+   "defense-drones"
   ],
   "analysis_url": null,
   "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2025/10/03/2025-19435/accepted-means-of-compliance-for-small-unmanned-sua-aircraft-category-2-and-category-3-operations",
+  "document_url": "https://www.federalregister.gov/documents/2025/10/09/2025-19508/additions-to-the-entity-list",
   "latest": null
  },
  {
   "slug": "adjusting-imports-of-unmanned-aircraft-systems-and-unmanned-aircraft-systems-com",
   "kind": "executive_action",
   "title": "Adjusting Imports of Unmanned Aircraft Systems and Unmanned Aircraft Systems Components Into the United States",
-  "tracks": [],
+  "tracks": [
+   "defense-drones",
+   "foreign-drone-restrictions",
+   "industrial-base-exports"
+  ],
   "analysis_url": null,
   "bill_url": null,
   "document_url": "https://www.federalregister.gov/documents/2026/08/19/2026-16979/adjusting-imports-of-unmanned-aircraft-systems-and-unmanned-aircraft-systems-components-into-the",
-  "latest": null
- },
- {
-  "slug": "agency-information-collection-activities-proposed-ecollection-ecomments-requ-2",
-  "kind": "other",
-  "title": "Agency Information Collection Activities; Proposed eCollection eComments Requested; Revision of a Previously Approved Collection; Title-SAFER SKIES State, Local, Tribal, and Territorial Counter-UAS Information Collection",
-  "tracks": [
-   "counter-uas-authority"
-  ],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2026/09/01/2026-17853/agency-information-collection-activities-proposed-ecollection-ecomments-requested-revision-of-a",
-  "latest": null
- },
- {
-  "slug": "agency-information-collection-activities-proposed-ecollection-ecomments-requeste",
-  "kind": "other",
-  "title": "Agency Information Collection Activities; Proposed eCollection eComments Requested; SAFER SKIES State, Local, Tribal, and Territorial Counter-UAS Information Collection",
-  "tracks": [
-   "counter-uas-authority",
-   "public-safety"
-  ],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2026/11/04/2026-22535/agency-information-collection-activities-proposed-ecollection-ecomments-requested-safer-skies-state",
-  "latest": {
-   "date": "2026-11-04",
-   "summary": "Comments due 2026-12-04"
-  }
- },
- {
-  "slug": "agency-information-collection-activities-requests-for-comments-clearance-of-8",
-  "kind": "other",
-  "title": "Agency Information Collection Activities: Requests for Comments; Clearance of a New Approval of Information Collection: FAA Request Form for CUAS Coordination",
-  "tracks": [
-   "bvlos-airspace"
-  ],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2026/02/13/2026-02954/agency-information-collection-activities-requests-for-comments-clearance-of-a-new-approval-of",
-  "latest": null
- },
- {
-  "slug": "agency-information-collection-activities-requests-for-comments-clearance-of-a-ne",
-  "kind": "other",
-  "title": "Agency Information Collection Activities: Requests for Comments; Clearance of a New Approval of Information Collection: Unmanned Aircraft System (UAS) Integration at Airports and Necessary Planning, Design, and Physical Infrastructure Needs",
-  "tracks": [
-   "bvlos-airspace"
-  ],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2026/03/23/2026-05603/agency-information-collection-activities-requests-for-comments-clearance-of-a-new-approval-of",
-  "latest": null
- },
- {
-  "slug": "agency-information-collection-activities-requests-for-comments-clearance-of-2",
-  "kind": "other",
-  "title": "Agency Information Collection Activities: Requests for Comments; Clearance of a Renewed",
-  "tracks": [
-   "bvlos-airspace"
-  ],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2025/08/11/2025-15192/agency-information-collection-activities-requests-for-comments-clearance-of-a-renewed",
-  "latest": null
- },
- {
-  "slug": "agency-information-collection-activities-requests-for-comments-clearance-of-a-re",
-  "kind": "other",
-  "title": "Agency Information Collection Activities: Requests for Comments; Clearance of a Renewed Approval of Information Collection: Pilot Certification Unmanned Aircraft Systems",
-  "tracks": [
-   "bvlos-airspace"
-  ],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2025/08/12/2025-15269/agency-information-collection-activities-requests-for-comments-clearance-of-a-renewed-approval-of",
-  "latest": null
- },
- {
-  "slug": "agency-information-collection-activities-requests-for-comments-clearance-of-3",
-  "kind": "other",
-  "title": "Agency Information Collection Activities: Requests for Comments; Clearance of a Renewed Approval of Information Collection: Remote Identification of Unmanned Aircraft Systems-Application for FAA-Recognized Identification Areas",
-  "tracks": [
-   "bvlos-airspace"
-  ],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2025/09/22/2025-18227/agency-information-collection-activities-requests-for-comments-clearance-of-a-renewed-approval-of",
-  "latest": null
- },
- {
-  "slug": "agency-information-collection-activities-requests-for-comments-clearance-of-6",
-  "kind": "other",
-  "title": "Agency Information Collection Activities: Requests for Comments; Clearance of a Renewed Approval of Information Collection: Small Unmanned Aircraft Registration System; Correction",
-  "tracks": [
-   "bvlos-airspace"
-  ],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2026/02/09/2026-02469/agency-information-collection-activities-requests-for-comments-clearance-of-a-renewed-approval-of",
-  "latest": null
- },
- {
-  "slug": "agency-information-collection-activities-requests-for-comments-clearance-of-new",
-  "kind": "other",
-  "title": "Agency Information Collection Activities: Requests for Comments; Clearance of New Approval of Information Collection: Expedited Special Government Interest (SGI) Waiver or Authorization for Unmanned Aerial Systems (UAS) Operations",
-  "tracks": [
-   "bvlos-airspace"
-  ],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2025/06/09/2025-09955/agency-information-collection-activities-requests-for-comments-clearance-of-new-approval-of",
-  "latest": null
- },
- {
-  "slug": "agency-information-collection-activities-requests-for-comments-clearance-of-4",
-  "kind": "other",
-  "title": "Agency Information Collection Activities: Requests for Comments; Clearance of Renewed Approval of Information Collection: 2120-0776, Part 107 Authorizations and Waivers Under 14 CFR Part 107 and Airspace Authorizations in Controlled Airspace Under 49 U.S.C. 44809(a)(5)",
-  "tracks": [
-   "bvlos-airspace"
-  ],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2025/11/03/2025-19759/agency-information-collection-activities-requests-for-comments-clearance-of-renewed-approval-of",
-  "latest": null
- },
- {
-  "slug": "agency-information-collection-activities-requests-for-comments-clearance-of-5",
-  "kind": "other",
-  "title": "Agency Information Collection Activities: Requests for Comments; Clearance of Renewed Approval of Information Collection: Small Unmanned Aircraft Registration System",
-  "tracks": [
-   "bvlos-airspace"
-  ],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2025/09/23/2025-18382/agency-information-collection-activities-requests-for-comments-clearance-of-renewed-approval-of",
-  "latest": null
- },
- {
-  "slug": "agency-information-collection-activities-requests-for-comments-clearance-of-7",
-  "kind": "other",
-  "title": "Agency Information Collection Activities: Requests for Comments; Clearance of Renewed Approval of Information Collection: Small Unmanned Aircraft Registration System",
-  "tracks": [
-   "bvlos-airspace"
-  ],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2026/01/29/2026-01798/agency-information-collection-activities-requests-for-comments-clearance-of-renewed-approval-of",
-  "latest": null
- },
- {
-  "slug": "agency-information-collection-activities-requests-for-comments-clearance-of-rene",
-  "kind": "other",
-  "title": "Agency Information Collection Activities: Requests for Comments; Clearance of Renewed Approval of Information Collection: Unmanned Aircraft Systems (UAS) Support Center Case Management System (CMS)",
-  "tracks": [
-   "bvlos-airspace"
-  ],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2025/10/01/2025-19167/agency-information-collection-activities-requests-for-comments-clearance-of-renewed-approval-of",
-  "latest": null
- },
- {
-  "slug": "agency-information-collection-remotely-administered-psychoacoustic-test-for-adva",
-  "kind": "other",
-  "title": "Agency Information Collection: Remotely Administered Psychoacoustic Test for Advanced Air Mobility Noise Human Response",
-  "tracks": [],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2025/04/22/2025-06869/agency-information-collection-remotely-administered-psychoacoustic-test-for-advanced-air-mobility",
   "latest": null
  },
  {
@@ -287,6 +76,7 @@
   "kind": "bill",
   "title": "American Drone Manufacturing Dominance Act of 2026",
   "tracks": [
+   "defense-drones",
    "foreign-drone-restrictions",
    "industrial-base-exports",
    "public-safety"
@@ -304,6 +94,7 @@
   "kind": "bill",
   "title": "American Security Robotics Act of 2026",
   "tracks": [
+   "defense-drones",
    "foreign-drone-restrictions",
    "industrial-base-exports"
   ],
@@ -316,10 +107,26 @@
   }
  },
  {
+  "slug": "arms-sales-notifications-involving-drones",
+  "kind": "other",
+  "title": "Arms sales notifications involving drones",
+  "tracks": [
+   "defense-drones"
+  ],
+  "analysis_url": null,
+  "bill_url": null,
+  "document_url": "https://www.federalregister.gov/documents/2026/11/20/2026-23640/arms-sales-notification",
+  "latest": {
+   "date": "2026-11-20",
+   "summary": "Office of the Secretary: Notice, Arms Sales Notification"
+  }
+ },
+ {
   "slug": "hb4759-ban-military-drones-spying-on-civilians-act",
   "kind": "bill",
   "title": "Ban Military Drones Spying on Civilians Act",
   "tracks": [
+   "defense-drones",
    "fy2027-ndaa",
    "public-safety"
   ],
@@ -336,6 +143,7 @@
   "kind": "bill",
   "title": "Block the Use of Transatlantic Technology in Iranian Made Drones Act",
   "tracks": [
+   "defense-drones",
    "foreign-drone-restrictions",
    "fy2027-ndaa",
    "industrial-base-exports"
@@ -353,6 +161,7 @@
   "kind": "bill",
   "title": "Blue Skies for Taiwan Act of 2026",
   "tracks": [
+   "defense-drones",
    "fy2027-ndaa",
    "industrial-base-exports"
   ],
@@ -365,91 +174,11 @@
   }
  },
  {
-  "slug": "sb1908-border-drone-threat-assessment-act",
-  "kind": "bill",
-  "title": "Border Drone Threat Assessment Act",
-  "tracks": [
-   "counter-uas-authority",
-   "fy2027-ndaa"
-  ],
-  "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/senate-bill/1908/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-09-11",
-   "summary": "SB1908 now tracked. Latest action: Read twice and referred to the Committee on Armed Services. (2025-05-22)"
-  }
- },
- {
-  "slug": "sb2342-border-drone-threat-assessment-act-intelligence-community-efficiency-and",
-  "kind": "bill",
-  "title": "Border Drone Threat Assessment Act Intelligence Community Efficiency and Effectiveness Act of 2025",
-  "tracks": [
-   "counter-uas-authority",
-   "fy2027-ndaa"
-  ],
-  "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/senate-bill/2342/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-09-11",
-   "summary": "SB2342 now tracked. Latest action: By Senator Cotton from Select Committee on Intelligence filed written report. Report No. 119-51. Minority views filed. (2025-07-29)"
-  }
- },
- {
-  "slug": "hb96-buzz-off-act",
-  "kind": "bill",
-  "title": "Buzz Off Act",
-  "tracks": [
-   "counter-uas-authority",
-   "public-safety"
-  ],
-  "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/house-bill/96/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-09-11",
-   "summary": "HB96 now tracked. Latest action: Referred to the House Committee on the Judiciary. (2025-01-03)"
-  }
- },
- {
-  "slug": "hr118-calling-on-federal-law-enforcement-led-by-the-federal-bureau-of-investigat",
-  "kind": "bill",
-  "title": "Calling on Federal law enforcement, led by the Federal Bureau of Investigation, the Department of Homeland Security, and the Federal Aviation Administration, to provide an immediate briefing to the public regarding the recent drone activity in New Jersey and New York.",
-  "tracks": [
-   "counter-uas-authority",
-   "public-safety"
-  ],
-  "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/house-resolution/118/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-09-11",
-   "summary": "HR118 now tracked. Latest action: Referred to the Subcommittee on Aviation. (2025-02-06)"
-  }
- },
- {
-  "slug": "hb2775-coastal-drone-surveillance-and-interdiction-assessment-act",
-  "kind": "bill",
-  "title": "Coastal Drone Surveillance and Interdiction Assessment Act",
-  "tracks": [
-   "counter-uas-authority",
-   "industrial-base-exports",
-   "public-safety"
-  ],
-  "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/house-bill/2775/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-09-11",
-   "summary": "HB2775 now tracked. Latest action: Referred to the Subcommittee on Border Security and Enforcement. (2025-04-09)"
-  }
- },
- {
   "slug": "comment-sought-on-prohibiting-the-importation-and-marketing-of-certain-covered-u",
   "kind": "other",
   "title": "Comment Sought on Prohibiting the Importation and Marketing of Certain Covered UAS and UAS Critical Components and Equipment Listed in Section 1709 of FY2025 NDAA",
   "tracks": [
+   "defense-drones",
    "foreign-drone-restrictions"
   ],
   "analysis_url": null,
@@ -458,118 +187,12 @@
   "latest": null
  },
  {
-  "slug": "hb3463-counter-act-comprehensive-operations-for-unmanned-system-neutralization-a",
-  "kind": "bill",
-  "title": "COUNTER Act Comprehensive Operations for Unmanned-System Neutralization and Threat Elimination Response Act",
-  "tracks": [
-   "counter-uas-authority",
-   "fy2027-ndaa"
-  ],
-  "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/house-bill/3463/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-10-11",
-   "summary": "SB1793: record updated (sponsors, votes or details)"
-  }
- },
- {
-  "slug": "hb7525-counter-drone-state-and-local-defender-act",
-  "kind": "bill",
-  "title": "Counter Drone State and Local Defender Act",
-  "tracks": [
-   "counter-uas-authority",
-   "public-safety"
-  ],
-  "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/house-bill/7525/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-09-11",
-   "summary": "HB7525 now tracked. Latest action: Referred to the Subcommittee on Aviation. (2026-02-13)"
-  }
- },
- {
-  "slug": "sb3032-counter-uas-authority-extension-act",
-  "kind": "bill",
-  "title": "Counter-UAS Authority Extension Act",
-  "tracks": [
-   "counter-uas-authority",
-   "fy2027-ndaa"
-  ],
-  "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/senate-bill/3032/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-09-11",
-   "summary": "SB3032 now tracked. Latest action: Read the second time. Placed on Senate Legislative Calendar under General Orders. Calendar No. 206. (2025-10-22)"
-  }
- },
- {
-  "slug": "counter-uas-authority-for-state-local-tribal-and-territorial-law-enforcement-and",
-  "kind": "rulemaking",
-  "title": "Counter-UAS Authority for State, Local, Tribal, and Territorial Law Enforcement and Correctional Agencies",
-  "tracks": [
-   "counter-uas-authority"
-  ],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2026/07/06/2026-13609/counter-uas-authority-for-state-local-tribal-and-territorial-law-enforcement-and-correctional",
-  "latest": null
- },
- {
-  "slug": "hb5061-counter-uas-authority-security-safety-and-reauthorization-act",
-  "kind": "bill",
-  "title": "Counter-UAS Authority Security, Safety, and Reauthorization Act",
-  "tracks": [
-   "counter-uas-authority",
-   "fy2027-ndaa",
-   "public-safety"
-  ],
-  "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/house-bill/5061/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-09-11",
-   "summary": "HB5061 now tracked. Latest action: Ordered to be Reported (Amended) by the Yeas and Nays: 60 - 0. (2025-09-03)"
-  }
- },
- {
-  "slug": "sb4380-critical-infrastructure-airspace-defense-act",
-  "kind": "bill",
-  "title": "Critical Infrastructure Airspace Defense Act",
-  "tracks": [
-   "counter-uas-authority"
-  ],
-  "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/senate-bill/4380/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-09-11",
-   "summary": "HB9232 now tracked. Latest action: Referred to the Subcommittee on Transportation and Maritime Security. (2026-07-07)"
-  }
- },
- {
-  "slug": "hb3598-deescalation-drone-pilot-program-act-of-2025",
-  "kind": "bill",
-  "title": "Deescalation Drone Pilot Program Act of 2025",
-  "tracks": [
-   "public-safety"
-  ],
-  "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/house-bill/3598/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-09-11",
-   "summary": "SB4309 now tracked. Latest action: Read twice and referred to the Committee on Commerce, Science, and Transportation. (2026-04-15)"
-  }
- },
- {
   "slug": "hb6846-defend-act-detecting-and-evaluating-foreign-exploitation-of-novel-drones",
   "kind": "bill",
   "title": "DEFEND Act Detecting and Evaluating Foreign Exploitation of Novel Drones Act",
   "tracks": [
    "counter-uas-authority",
+   "defense-drones",
    "foreign-drone-restrictions"
   ],
   "analysis_url": null,
@@ -581,63 +204,28 @@
   }
  },
  {
-  "slug": "hb1907-defense-against-drones-act-of-2025",
+  "slug": "hb4016-department-of-defense-appropriations-act-2026",
   "kind": "bill",
-  "title": "Defense Against Drones Act of 2025",
+  "title": "Department of Defense Appropriations Act, 2026",
   "tracks": [
-   "bvlos-airspace",
-   "counter-uas-authority"
+   "defense-drones"
   ],
   "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/house-bill/1907/all-info",
+  "bill_url": "https://www.congress.gov/bill/119th-congress/house-bill/4016/all-info",
   "document_url": null,
-  "latest": {
-   "date": "2026-09-11",
-   "summary": "HB1907 now tracked. Latest action: Referred to the Subcommittee on Aviation. (2025-03-06)"
-  }
- },
- {
-  "slug": "hb8935-department-of-energy-drone-defense-act",
-  "kind": "bill",
-  "title": "Department of Energy Drone Defense Act",
-  "tracks": [
-   "counter-uas-authority",
-   "fy2027-ndaa"
-  ],
-  "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/house-bill/8935/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-09-11",
-   "summary": "HB8935 now tracked. Latest action: Referred to the House Committee on Oversight and Government Reform. (2026-05-20)"
-  }
- },
- {
-  "slug": "designation-restrict-the-operation-of-unmanned-aircraft-in-close-proximity-to-a",
-  "kind": "rulemaking",
-  "title": "Designation-Restrict the Operation of Unmanned Aircraft in Close Proximity to a Fixed Site Facility; Extension of Comment Period",
-  "tracks": [
-   "bvlos-airspace"
-  ],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2026/06/30/2026-13126/designation-restrict-the-operation-of-unmanned-aircraft-in-close-proximity-to-a-fixed-site-facility",
   "latest": null
  },
  {
-  "slug": "hb1058-drone-act-of-2025-directing-resources-for-officers-navigating-emergencies",
+  "slug": "hb9495-department-of-defense-appropriations-act-2027",
   "kind": "bill",
-  "title": "DRONE Act of 2025 Directing Resources for Officers Navigating Emergencies Act of 2025",
+  "title": "Department of Defense Appropriations Act, 2027",
   "tracks": [
-   "public-safety"
+   "defense-drones"
   ],
   "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/house-bill/1058/all-info",
+  "bill_url": "https://www.congress.gov/bill/119th-congress/house-bill/9495/all-info",
   "document_url": null,
-  "latest": {
-   "date": "2026-09-11",
-   "summary": "HB1058 now tracked. Latest action: Referred to the House Committee on the Judiciary. (2025-02-06)"
-  }
+  "latest": null
  },
  {
   "slug": "hb2939-drone-espionage-act",
@@ -645,6 +233,7 @@
   "title": "Drone Espionage Act",
   "tracks": [
    "counter-uas-authority",
+   "defense-drones",
    "foreign-drone-restrictions",
    "fy2027-ndaa"
   ],
@@ -657,55 +246,11 @@
   }
  },
  {
-  "slug": "sb1249-drone-integration-and-zoning-act",
-  "kind": "bill",
-  "title": "Drone Integration and Zoning Act",
-  "tracks": [
-   "bvlos-airspace"
-  ],
-  "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/senate-bill/1249/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-09-11",
-   "summary": "SB1249 now tracked. Latest action: Read twice and referred to the Committee on Commerce, Science, and Transportation. (2025-04-02)"
-  }
- },
- {
-  "slug": "hb6647-drone-safety-enhancement-act",
-  "kind": "bill",
-  "title": "Drone Safety Enhancement Act",
-  "tracks": [
-   "bvlos-airspace"
-  ],
-  "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/house-bill/6647/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-09-11",
-   "summary": "HB6647 now tracked. Latest action: Referred to the House Committee on Science, Space, and Technology. (2025-12-11)"
-  }
- },
- {
-  "slug": "hb10304-drone-safety-statement-modernization-act",
-  "kind": "bill",
-  "title": "Drone Safety Statement Modernization Act",
-  "tracks": [
-   "bvlos-airspace"
-  ],
-  "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/house-bill/10304/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-09-17",
-   "summary": "HB10304 now tracked. Latest action: Referred to the House Committee on Transportation and Infrastructure. (2026-09-08)"
-  }
- },
- {
   "slug": "sb2168-drones-for-america-act",
   "kind": "bill",
   "title": "Drones for America Act",
   "tracks": [
+   "defense-drones",
    "foreign-drone-restrictions",
    "industrial-base-exports"
   ],
@@ -722,6 +267,7 @@
   "kind": "bill",
   "title": "Drones for First Responders Act",
   "tracks": [
+   "defense-drones",
    "foreign-drone-restrictions",
    "industrial-base-exports",
    "public-safety"
@@ -735,173 +281,95 @@
   }
  },
  {
-  "slug": "electric-vertical-takeoff-and-landing-and-advanced-air-mobility-integration-pilo",
-  "kind": "other",
-  "title": "Electric Vertical Takeoff and Landing and Advanced Air Mobility Integration Pilot Program-Announcement of Establishment of Program and Request for Proposals",
-  "tracks": [
-   "bvlos-airspace"
-  ],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2025/09/16/2025-17844/electric-vertical-takeoff-and-landing-and-advanced-air-mobility-integration-pilot",
-  "latest": null
- },
- {
-  "slug": "electric-vertical-takeoff-and-landing-and-advanced-air-mobility-integration-3",
-  "kind": "other",
-  "title": "Electric Vertical Takeoff and Landing and Advanced Air Mobility Integration Pilot Program-Announcement of Establishment of Program and Request for Proposals",
-  "tracks": [
-   "bvlos-airspace"
-  ],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2025/12/23/2025-23732/electric-vertical-takeoff-and-landing-and-advanced-air-mobility-integration-pilot",
-  "latest": null
- },
- {
-  "slug": "electric-vertical-takeoff-and-landing-and-advanced-air-mobility-integration-2",
-  "kind": "other",
-  "title": "Electric Vertical Takeoff and Landing and Advanced Air Mobility Integration Pilot Program-Announcement of Establishment of Program and Request for Proposals",
-  "tracks": [
-   "bvlos-airspace"
-  ],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2025/12/16/2025-22836/electric-vertical-takeoff-and-landing-and-advanced-air-mobility-integration-pilot",
-  "latest": null
- },
- {
-  "slug": "establishing-the-digital-opportunity-data-collection-modernizing-the-fcc-form-47",
+  "slug": "enhanced-favorable-treatment-for-the-united-arab-emirates-under-the-export-admin",
   "kind": "rulemaking",
-  "title": "Establishing the Digital Opportunity Data Collection; Modernizing the FCC Form 477 Data Program; Delete, Delete, Delete",
+  "title": "Enhanced Favorable Treatment for the United Arab Emirates Under the Export Administration Regulations",
   "tracks": [
-   "foreign-drone-restrictions"
+   "defense-drones"
   ],
   "analysis_url": null,
   "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2026/06/24/2026-12767/establishing-the-digital-opportunity-data-collection-modernizing-the-fcc-form-477-data-program",
+  "document_url": "https://www.federalregister.gov/documents/2026/07/14/2026-14132/enhanced-favorable-treatment-for-the-united-arab-emirates-under-the-export-administration",
   "latest": null
  },
  {
-  "slug": "extension-of-agency-information-collection-activity-under-omb-review-tsa-airspac",
-  "kind": "other",
-  "title": "Extension of Agency Information Collection Activity Under OMB Review: TSA Airspace Waiver Program",
-  "tracks": [],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2025/11/26/2025-21115/extension-of-agency-information-collection-activity-under-omb-review-tsa-airspace-waiver-program",
-  "latest": null
- },
- {
-  "slug": "facilitating-opportunities-for-advanced-air-mobility",
+  "slug": "federal-acquisition-regulation-prohibition-on-certain-semiconductor-products-and",
   "kind": "rulemaking",
-  "title": "Facilitating Opportunities for Advanced Air Mobility",
+  "title": "Federal Acquisition Regulation: Prohibition on Certain Semiconductor Products and Services",
   "tracks": [
-   "foreign-drone-restrictions"
+   "defense-drones"
   ],
   "analysis_url": null,
   "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2025/03/17/2025-03602/facilitating-opportunities-for-advanced-air-mobility",
+  "document_url": "https://www.federalregister.gov/documents/2026/02/17/2026-03065/federal-acquisition-regulation-prohibition-on-certain-semiconductor-products-and-services",
   "latest": null
  },
  {
-  "slug": "fy-2026-job-placement-and-training-native-american-technology-and-manufacturing",
-  "kind": "other",
-  "title": "FY 2026 Job Placement and Training-Native American Technology and Manufacturing Grant Pilot Program (IGNITE: Indigenous Growth in New & Innovative Trade Employment); Solicitation of Proposals",
-  "tracks": [
-   "industrial-base-exports"
-  ],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2026/07/13/2026-14057/fy-2026-job-placement-and-training-native-american-technology-and-manufacturing-grant-pilot-program",
-  "latest": null
- },
- {
-  "slug": "hb8697-guard-the-skies-act",
-  "kind": "bill",
-  "title": "Guard the Skies Act",
-  "tracks": [
-   "counter-uas-authority",
-   "fy2027-ndaa",
-   "public-safety"
-  ],
-  "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/house-bill/8697/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-11-23",
-   "summary": "SB5716 now tracked. Latest action: Read twice and referred to the Committee on Armed Services. (2026-11-11)"
-  }
- },
- {
-  "slug": "implementing-certain-tariff-related-elements-of-the-united-states-japan-agreemen",
-  "kind": "other",
-  "title": "Implementing Certain Tariff-Related Elements of the United States-Japan Agreement",
-  "tracks": [],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2025/09/16/2025-17908/implementing-certain-tariff-related-elements-of-the-united-states-japan-agreement",
-  "latest": null
- },
- {
-  "slug": "implementing-section-927-waiver-process-for-certain-unmanned-aircraft-operations",
-  "kind": "other",
-  "title": "Implementing Section 927 Waiver Process for Certain Unmanned Aircraft Operations",
-  "tracks": [
-   "bvlos-airspace"
-  ],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2026/04/01/2026-06297/implementing-section-927-waiver-process-for-certain-unmanned-aircraft-operations",
-  "latest": null
- },
- {
-  "slug": "inspection-programs-for-single-engine-turbine-powered-airplanes-and-unmanned-air",
+  "slug": "federal-acquisition-regulation-revolutionary-federal-acquisition-regulation-over",
   "kind": "rulemaking",
-  "title": "Inspection Programs for Single-Engine Turbine-Powered Airplanes and Unmanned Aircraft; and Miscellaneous Maintenance-Related Updates",
+  "title": "Federal Acquisition Regulation: Revolutionary Federal Acquisition Regulation Overhaul Parts 1, 2, 4, 33, 39, 40, and 53",
   "tracks": [
-   "bvlos-airspace"
+   "defense-drones"
   ],
   "analysis_url": null,
   "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2026/11/10/2026-22953/inspection-programs-for-single-engine-turbine-powered-airplanes-and-unmanned-aircraft-and",
-  "latest": {
-   "date": "2026-11-10",
-   "summary": "FAA: Supporting & Related Material, U.S. DOT/FAA - Inspection Programs for Single-Engine Turbine-Powered Airplanes and Unmanned Aircraft; and Miscellaneous Maintenance-Related Updates - Final Rule - Regulatory Impact Analysis (April 2026)"
-  }
- },
- {
-  "slug": "intent-to-request-extension-from-omb-of-one-current-public-collection-of-informa",
-  "kind": "other",
-  "title": "Intent to Request Extension From OMB of One Current Public Collection of Information: TSA Airspace Waiver Program",
-  "tracks": [],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2025/06/02/2025-09950/intent-to-request-extension-from-omb-of-one-current-public-collection-of-information-tsa-airspace",
+  "document_url": "https://www.federalregister.gov/documents/2026/06/23/2026-12559/federal-acquisition-regulation-revolutionary-federal-acquisition-regulation-overhaul-parts-1-2-4-33",
   "latest": null
  },
  {
-  "slug": "hb6042-landed-act-law-against-nefarious-drones-enforcement-deconfliction-act",
-  "kind": "bill",
-  "title": "LANDED Act Law Against Nefarious Drones, Enforcement, Deconfliction Act",
+  "slug": "implementing-certain-tariff-related-elements-of-a-trade-and-security-agreement-b",
+  "kind": "other",
+  "title": "Implementing Certain Tariff-Related Elements of a Trade and Security Agreement Between the American Institute in Taiwan and the Taipei Economic and Cultural Representative Office in the United States",
   "tracks": [
-   "counter-uas-authority",
-   "fy2027-ndaa",
-   "public-safety"
+   "defense-drones"
   ],
   "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/house-bill/6042/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-09-11",
-   "summary": "HB6042 now tracked. Latest action: Referred to the Subcommittee on Counterterrorism and Intelligence. (2025-11-13)"
-  }
+  "bill_url": null,
+  "document_url": "https://www.federalregister.gov/documents/2026/05/28/2026-10571/implementing-certain-tariff-related-elements-of-a-trade-and-security-agreement-between-the-american",
+  "latest": null
+ },
+ {
+  "slug": "implementing-certain-tariff-related-elements-of-the-framework-for-a-united-state",
+  "kind": "other",
+  "title": "Implementing Certain Tariff-Related Elements of the Framework for a United States-Switzerland-Liechtenstein Agreement on Fair, Balanced, and Reciprocal Trade",
+  "tracks": [
+   "defense-drones"
+  ],
+  "analysis_url": null,
+  "bill_url": null,
+  "document_url": "https://www.federalregister.gov/documents/2025/12/18/2025-23316/implementing-certain-tariff-related-elements-of-the-framework-for-a-united",
+  "latest": null
+ },
+ {
+  "slug": "implementing-certain-tariff-related-elements-of-the-u-s-eu-framework-on-an-agree",
+  "kind": "other",
+  "title": "Implementing Certain Tariff-Related Elements of the U.S.-EU Framework on an Agreement on Reciprocal, Fair, and Balanced Trade",
+  "tracks": [
+   "defense-drones"
+  ],
+  "analysis_url": null,
+  "bill_url": null,
+  "document_url": "https://www.federalregister.gov/documents/2025/09/25/2025-18660/implementing-certain-tariff-related-elements-of-the-us-eu-framework-on-an-agreement-on-reciprocal",
+  "latest": null
+ },
+ {
+  "slug": "implementing-certain-tariff-related-elements-of-the-u-s-korea-strategic-trade-an",
+  "kind": "other",
+  "title": "Implementing Certain Tariff-Related Elements of the U.S.-Korea Strategic Trade and Investment Deal",
+  "tracks": [
+   "defense-drones"
+  ],
+  "analysis_url": null,
+  "bill_url": null,
+  "document_url": "https://www.federalregister.gov/documents/2025/12/04/2025-21940/implementing-certain-tariff-related-elements-of-the-us-korea-strategic-trade-and-investment-deal",
+  "latest": null
  },
  {
   "slug": "sb2387-lead-act-of-2025-leading-exports-of-aerial-drones-act-of-2025",
   "kind": "bill",
   "title": "LEAD Act of 2025 Leading Exports of Aerial Drones Act of 2025",
   "tracks": [
+   "defense-drones",
    "fy2027-ndaa",
    "industrial-base-exports"
   ],
@@ -914,75 +382,29 @@
   }
  },
  {
-  "slug": "hb5829-leveraging-aerial-systems-for-stewardship-operations-lasso-act",
-  "kind": "bill",
-  "title": "Leveraging Aerial Systems for Stewardship Operations (LASSO) Act",
+  "slug": "measures-to-restrict-stockpiling-of-polysilicon-and-polysilicon-derivatives-unde",
+  "kind": "rulemaking",
+  "title": "Measures To Restrict Stockpiling of Polysilicon and Polysilicon Derivatives Under Proclamation 11052",
   "tracks": [
-   "public-safety"
+   "defense-drones"
   ],
-  "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/house-bill/5829/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-09-11",
-   "summary": "HB5829 now tracked. Latest action: Referred to the House Committee on Natural Resources. (2025-10-24)"
-  }
- },
- {
-  "slug": "hb4686-lift-act-of-2025-local-innovation-for-flight-technologies-act-of-2025",
-  "kind": "bill",
-  "title": "LIFT Act of 2025 Local Innovation for Flight Technologies Act of 2025",
-  "tracks": [
-   "bvlos-airspace"
-  ],
-  "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/house-bill/4686/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-09-11",
-   "summary": "HB4686 now tracked. Latest action: Referred to the Subcommittee on Aviation. (2025-07-24)"
-  }
- },
- {
-  "slug": "marine-mammals-proposed-incidental-harassment-authorization-for-the-southern-bea",
-  "kind": "other",
-  "title": "Marine Mammals; Proposed Incidental Harassment Authorization for the Southern Beaufort Sea Stock of Polar Bears in the Prudhoe Bay Area of the North Slope Borough, Alaska; Draft Environmental Assessment",
-  "tracks": [],
   "analysis_url": null,
   "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2026/06/10/2026-11645/marine-mammals-proposed-incidental-harassment-authorization-for-the-southern-beaufort-sea-stock-of",
+  "document_url": "https://www.federalregister.gov/documents/2026/09/24/2026-19537/measures-to-restrict-stockpiling-of-polysilicon-and-polysilicon-derivatives-under-proclamation-11052",
   "latest": null
  },
  {
-  "slug": "hb7379-nasa-c-uas-act-nasa-counter-unmanned-aircraft-system-authority-act",
+  "slug": "fy2026-ndaa",
   "kind": "bill",
-  "title": "NASA C-UAS Act NASA Counter-Unmanned Aircraft System Authority Act",
+  "title": "National Defense Authorization Act for Fiscal Year 2026 (S. 1071, enacted; H.R. 3838 / S. 2296)",
   "tracks": [
    "counter-uas-authority",
-   "fy2027-ndaa"
+   "defense-drones"
   ],
   "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/house-bill/7379/all-info",
+  "bill_url": "https://www.congress.gov/bill/119th-congress/senate-bill/1071/all-info",
   "document_url": null,
-  "latest": {
-   "date": "2026-09-11",
-   "summary": "HB7379 now tracked. Latest action: Referred to the Subcommittee on Aviation. (2026-02-05)"
-  }
- },
- {
-  "slug": "sb4264-nasa-uas-detection-act",
-  "kind": "bill",
-  "title": "NASA UAS Detection Act",
-  "tracks": [
-   "counter-uas-authority"
-  ],
-  "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/senate-bill/4264/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-09-11",
-   "summary": "SB4264 now tracked. Latest action: Read twice and referred to the Committee on Commerce, Science, and Transportation. (2026-03-26)"
-  }
+  "latest": null
  },
  {
   "slug": "fy2027-ndaa",
@@ -990,6 +412,7 @@
   "title": "National Defense Authorization Act for Fiscal Year 2027 (H.R. 8800 / S. 4784)",
   "tracks": [
    "counter-uas-authority",
+   "defense-drones",
    "fy2027-ndaa",
    "industrial-base-exports"
   ],
@@ -997,124 +420,32 @@
   "bill_url": "https://www.congress.gov/bill/119th-congress/house-bill/8800/all-info",
   "document_url": null,
   "latest": {
-   "date": "2026-11-23",
-   "summary": "HB8800 now tracked. Latest action: Received in the Senate. (2026-09-14)"
-  }
- },
- {
-  "slug": "hb709-national-training-center-for-counter-unmanned-aircraft-systems-act",
-  "kind": "bill",
-  "title": "National Training Center for Counter-Unmanned Aircraft Systems Act",
-  "tracks": [
-   "counter-uas-authority",
-   "public-safety"
-  ],
-  "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/house-bill/709/all-info",
-  "document_url": null,
-  "latest": {
    "date": "2026-09-11",
-   "summary": "HB709 now tracked. Latest action: Referred to the Subcommittee on Aviation. (2025-01-24)"
+   "summary": "SB4784 now tracked. Latest action: Motion to proceed to consideration of measure made in Senate. (CR S4276) (2026-07-27)"
   }
  },
  {
-  "slug": "hb2205-nedd-act-nuclear-ecosystem-drone-defense-act",
-  "kind": "bill",
-  "title": "NEDD Act Nuclear Ecosystem Drone Defense Act",
+  "slug": "notice-of-determination-and-request-for-comments-concerning-action-pursuant-to-s",
+  "kind": "other",
+  "title": "Notice of Determination and Request for Comments Concerning Action Pursuant to Section 301: Brazil's Acts, Policies, and Practices Related to Digital Trade and Electronic Payment Services; Unfair, Preferential Tariffs; Anti-Corruption Enforcement; Intellectual Property Protection; Ethanol Market Access; and Illegal Deforestation",
   "tracks": [
-   "counter-uas-authority",
-   "fy2027-ndaa"
-  ],
-  "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/house-bill/2205/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-09-11",
-   "summary": "SB1762 now tracked. Latest action: Read twice and referred to the Committee on Homeland Security and Governmental Affairs. (2025-05-14)"
-  }
- },
- {
-  "slug": "normalizing-unmanned-aircraft-systems-beyond-visual-line-of-sight-operations-reo",
-  "kind": "rulemaking",
-  "title": "Normalizing Unmanned Aircraft Systems Beyond Visual Line of Sight Operations; Reopening of Comment Period; Denial of Extension",
-  "tracks": [
-   "bvlos-airspace"
+   "defense-drones"
   ],
   "analysis_url": null,
   "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2026/09/04/2026-18124/notice-soliciting-representatives-for-technical-roundtables-on-security-of-unmanned-aircraft-systems",
+  "document_url": "https://www.federalregister.gov/documents/2026/06/04/2026-11158/notice-of-determination-and-request-for-comments-concerning-action-pursuant-to-section-301-brazils",
   "latest": null
  },
  {
-  "slug": "notice-of-availability-notice-of-public-comment-period-and-request-for-comment-o",
+  "slug": "notice-of-request-for-public-comments-on-section-232-national-security-inves-2",
   "kind": "other",
-  "title": "Notice of Availability, Notice of Public Comment Period, and Request for Comment on the Draft Programmatic Environmental Assessment for Drone Package Delivery Operations in the United States",
+  "title": "Notice of Request for Public Comments on Section 232 National Security Investigation of Imports of Robotics and Industrial Machinery",
   "tracks": [
-   "bvlos-airspace"
+   "defense-drones"
   ],
   "analysis_url": null,
   "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2025/12/09/2025-22372/notice-of-availability-notice-of-public-comment-period-and-request-for-comment-on-the-draft",
-  "latest": null
- },
- {
-  "slug": "notice-of-availability-of-a-draft-programmatic-environmental-assessment-for-the",
-  "kind": "other",
-  "title": "Notice of Availability of a Draft Programmatic Environmental Assessment for the Nationwide Operation of Counter Unmanned Aircraft Systems",
-  "tracks": [
-   "counter-uas-authority"
-  ],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2025/08/04/2025-14658/notice-of-availability-of-a-draft-programmatic-environmental-assessment-for-the-nationwide-operation",
-  "latest": null
- },
- {
-  "slug": "notice-of-availability-of-the-final-programmatic-environmental-assessment-and-fo",
-  "kind": "other",
-  "title": "Notice of Availability of the Final Programmatic Environmental Assessment and FONSI/ROD",
-  "tracks": [
-   "bvlos-airspace"
-  ],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2026/07/30/2026-15417/notice-of-availability-of-the-final-programmatic-environmental-assessment-and-fonsirod",
-  "latest": null
- },
- {
-  "slug": "notice-of-extension-of-public-comment-period-for-the-draft-programmatic-environm",
-  "kind": "other",
-  "title": "Notice of Extension of Public Comment Period for the Draft Programmatic Environmental Assessment for Drone Package Delivery Operations in the United States",
-  "tracks": [
-   "bvlos-airspace"
-  ],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2026/01/05/2025-24237/notice-of-extension-of-public-comment-period-for-the-draft-programmatic-environmental-assessment-for",
-  "latest": null
- },
- {
-  "slug": "notice-of-guidance-transporting-hazardous-materials-by-unmanned-aircraft-systems",
-  "kind": "other",
-  "title": "Notice of Guidance: Transporting Hazardous Materials by Unmanned Aircraft Systems (UAS)",
-  "tracks": [
-   "bvlos-airspace"
-  ],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2025/11/19/2025-20242/notice-of-guidance-transporting-hazardous-materials-by-unmanned-aircraft-systems-uas",
-  "latest": null
- },
- {
-  "slug": "notice-of-intent-to-prepare-a-programmatic-environmental-assessment-for-the-nati",
-  "kind": "other",
-  "title": "Notice of Intent To Prepare a Programmatic Environmental Assessment for the Nationwide Operation of Counter-Unmanned Aircraft Systems",
-  "tracks": [
-   "counter-uas-authority"
-  ],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2025/03/07/2025-03532/notice-of-intent-to-prepare-a-programmatic-environmental-assessment-for-the-nationwide-operation-of",
+  "document_url": "https://www.federalregister.gov/documents/2025/09/26/2025-18749/notice-of-request-for-public-comments-on-section-232-national-security-investigation-of-imports-of",
   "latest": null
  },
  {
@@ -1122,23 +453,13 @@
   "kind": "other",
   "title": "Notice of Request for Public Comments on Section 232 National Security Investigation of Imports of Unmanned Aircraft Systems (UAS) and Their Parts and Components",
   "tracks": [
-   "foreign-drone-restrictions"
+   "defense-drones",
+   "foreign-drone-restrictions",
+   "industrial-base-exports"
   ],
   "analysis_url": null,
   "bill_url": null,
   "document_url": "https://www.federalregister.gov/documents/2025/07/16/2025-13365/notice-of-request-for-public-comments-on-section-232-national-security-investigation-of-imports-of",
-  "latest": null
- },
- {
-  "slug": "notice-of-rescission-of-unmanned-aircraft-systems-operations-over-people-declara",
-  "kind": "other",
-  "title": "Notice of Rescission of Unmanned Aircraft Systems Operations Over People Declaration of Compliance, Tracking No. OOP000000176 for Skydio X10 With AVSS Parachute Recovery System (PRS-X10)",
-  "tracks": [
-   "bvlos-airspace"
-  ],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2025/09/18/2025-18099/notice-of-rescission-of-unmanned-aircraft-systems-operations-over-people-declaration-of-compliance",
   "latest": null
  },
  {
@@ -1147,6 +468,7 @@
   "title": "Notice of Rescission of Unmanned Aircraft Systems Operations Over People Declaration of Compliance, Tracking No. OOP000000178 for DJI Mavic 3 Multispectral (M3M) With AVSS Parachute Recovery System (PRS-M3E)",
   "tracks": [
    "bvlos-airspace",
+   "defense-drones",
    "foreign-drone-restrictions"
   ],
   "analysis_url": null,
@@ -1155,23 +477,12 @@
   "latest": null
  },
  {
-  "slug": "petition-for-exemption-summary-of-petition-received-advanced-air-mobility",
-  "kind": "other",
-  "title": "Petition for Exemption; Summary of Petition Received; Advanced Air Mobility",
-  "tracks": [
-   "bvlos-airspace"
-  ],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2025/05/13/2025-08359/petition-for-exemption-summary-of-petition-received-advanced-air-mobility",
-  "latest": null
- },
- {
   "slug": "petition-for-exemption-summary-of-petition-received-agri-spray-drones-llc",
   "kind": "other",
   "title": "Petition for Exemption; Summary of Petition Received; Agri Spray Drones LLC",
   "tracks": [
    "bvlos-airspace",
+   "defense-drones",
    "foreign-drone-restrictions"
   ],
   "analysis_url": null,
@@ -1180,59 +491,11 @@
   "latest": null
  },
  {
-  "slug": "petition-for-exemption-summary-of-petition-received-drone-amplified-inc",
-  "kind": "other",
-  "title": "Petition for Exemption; Summary of Petition Received; Drone Amplified Inc.",
-  "tracks": [
-   "bvlos-airspace"
-  ],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2026/03/18/2026-05239/petition-for-exemption-summary-of-petition-received-drone-amplified-inc",
-  "latest": null
- },
- {
-  "slug": "petition-for-exemption-summary-of-petition-received-drone-power1-llc",
-  "kind": "other",
-  "title": "Petition for Exemption; Summary of Petition Received; Drone Power1 LLC",
-  "tracks": [
-   "bvlos-airspace"
-  ],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2025/03/19/2025-04549/petition-for-exemption-summary-of-petition-received-drone-power1-llc",
-  "latest": null
- },
- {
-  "slug": "pipeline-safety-integration-of-innovative-remote-sensing-technologies-for-right",
-  "kind": "rulemaking",
-  "title": "Pipeline Safety: Integration of Innovative Remote Sensing Technologies for Right-of-Way Patrols on Gas and Hazardous Liquid Pipelines",
-  "tracks": [],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2026/04/24/2026-08080/pipeline-safety-integration-of-innovative-remote-sensing-technologies-for-right-of-way-patrols-on",
-  "latest": null
- },
- {
-  "slug": "privacy-act-of-1974-system-of-records",
-  "kind": "other",
-  "title": "Privacy Act of 1974; System of Records",
-  "tracks": [
-   "bvlos-airspace"
-  ],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2026/11/03/2026-22436/privacy-act-of-1974-system-of-records",
-  "latest": {
-   "date": "2026-11-23",
-   "summary": "1 new public comment on DOT-OST-2026-3862"
-  }
- },
- {
   "slug": "protecting-against-national-security-threats-to-the-communications-supply-chain",
   "kind": "rulemaking",
   "title": "Protecting Against National Security Threats to the Communications Supply Chain Through the Equipment Authorization Program",
   "tracks": [
+   "defense-drones",
    "foreign-drone-restrictions"
   ],
   "analysis_url": null,
@@ -1241,143 +504,14 @@
   "latest": null
  },
  {
-  "slug": "hb8492-public-safety-uas-readiness-act",
-  "kind": "bill",
-  "title": "Public Safety UAS Readiness Act",
-  "tracks": [
-   "bvlos-airspace",
-   "public-safety"
-  ],
-  "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/house-bill/8492/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-09-11",
-   "summary": "HB8492 now tracked. Latest action: Referred to the House Committee on Transportation and Infrastructure. (2026-04-23)"
-  }
- },
- {
-  "slug": "hb1027-quiet-act-quashing-unwanted-and-interruptive-electronic-telecommunication",
-  "kind": "bill",
-  "title": "QUIET Act Quashing Unwanted and Interruptive Electronic Telecommunications Act",
-  "tracks": [],
-  "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/house-bill/1027/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-10-11",
-   "summary": "HB1027: record updated (sponsors, votes or details)"
-  }
- },
- {
-  "slug": "radar-data-pilot-program",
-  "kind": "other",
-  "title": "Radar Data Pilot Program",
-  "tracks": [
-   "bvlos-airspace"
-  ],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2026/06/30/2026-13211/radar-data-pilot-program",
-  "latest": null
- },
- {
-  "slug": "hb6460-recreational-drone-empowerment-act",
-  "kind": "bill",
-  "title": "Recreational Drone Empowerment Act",
-  "tracks": [
-   "bvlos-airspace"
-  ],
-  "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/house-bill/6460/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-09-11",
-   "summary": "HB6460 now tracked. Latest action: Received in the Senate and Read twice and referred to the Committee on Commerce, Science, and Transportation. (2026-03-25)"
-  }
- },
- {
-  "slug": "sb3481-safer-skies-act",
-  "kind": "bill",
-  "title": "SAFER SKIES Act",
-  "tracks": [
-   "counter-uas-authority",
-   "public-safety"
-  ],
-  "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/senate-bill/3481/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-09-11",
-   "summary": "SB3481 now tracked. Latest action: Read twice and referred to the Committee on Homeland Security and Governmental Affairs. (2025-12-15)"
-  }
- },
- {
-  "slug": "safety-zone-lake-michigan-chicago-il",
-  "kind": "rulemaking",
-  "title": "Safety Zone; Lake Michigan, Chicago, IL",
-  "tracks": [],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2026/10/15/2026-21053/safety-zone-lake-michigan-chicago-il",
-  "latest": {
-   "date": "2026-10-15",
-   "summary": "Coast Guard: Rule, Safety Zone; Lake Michigan, Chicago, IL"
-  }
- },
- {
-  "slug": "hb3796-sat-act-safety-from-aerial-technology-act",
-  "kind": "bill",
-  "title": "SAT Act Safety from Aerial Technology Act",
-  "tracks": [
-   "bvlos-airspace"
-  ],
-  "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/house-bill/3796/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-09-11",
-   "summary": "HB3796 now tracked. Latest action: Referred to the Subcommittee on Railroads, Pipelines, and Hazardous Materials. (2025-06-07)"
-  }
- },
- {
-  "slug": "hb9229-seaport-security-act-of-2026",
-  "kind": "bill",
-  "title": "Seaport Security Act of 2026",
-  "tracks": [
-   "counter-uas-authority",
-   "public-safety"
-  ],
-  "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/house-bill/9229/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-09-11",
-   "summary": "HB9229 now tracked. Latest action: Referred to the Committee on the Judiciary, and in addition to the Committee on Transportation and Infrastructure, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned. (2026-06-09)"
-  }
- },
- {
-  "slug": "hb6605-secure-our-skies-drone-safety-act-of-2025",
-  "kind": "bill",
-  "title": "Secure Our Skies Drone Safety Act of 2025",
-  "tracks": [
-   "bvlos-airspace",
-   "counter-uas-authority",
-   "public-safety"
-  ],
-  "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/house-bill/6605/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-09-11",
-   "summary": "HB6605 now tracked. Latest action: Referred to the Subcommittee on Aviation. (2026-02-02)"
-  }
- },
- {
   "slug": "securing-the-information-and-communications-technology-and-services-supply-chain",
   "kind": "rulemaking",
   "title": "Securing the Information and Communications Technology and Services Supply Chain: Unmanned Aircraft Systems",
-  "tracks": [],
+  "tracks": [
+   "defense-drones",
+   "foreign-drone-restrictions",
+   "industrial-base-exports"
+  ],
   "analysis_url": null,
   "bill_url": null,
   "document_url": "https://www.federalregister.gov/documents/2025/01/03/2024-30209/securing-the-information-and-communications-technology-and-services-supply-chain-unmanned-aircraft",
@@ -1388,6 +522,7 @@
   "kind": "other",
   "title": "Seeking Comment on Prohibiting the Importation and Marketing of Certain Covered UAS and UAS Critical Components and Equipment Listed in Section 1709 of FY2025 NDAA.",
   "tracks": [
+   "defense-drones",
    "foreign-drone-restrictions"
   ],
   "analysis_url": null,
@@ -1400,6 +535,7 @@
   "kind": "other",
   "title": "Seeking Comment on Prohibiting the Importation and Marketing of Certain Foreign-Produced Military-Grade Uncrewed Aircraft Systems (UAS) and UAS Critical Components for Non-U.S. Government, Including Those With Swarming Capabilities",
   "tracks": [
+   "defense-drones",
    "foreign-drone-restrictions"
   ],
   "analysis_url": null,
@@ -1408,39 +544,11 @@
   "latest": null
  },
  {
-  "slug": "settlement-policy-for-small-unmanned-aircraft-system-uas-cases",
-  "kind": "rulemaking",
-  "title": "Settlement Policy for Small Unmanned Aircraft System (UAS) Cases",
-  "tracks": [
-   "bvlos-airspace"
-  ],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2026/04/17/2026-07585/settlement-policy-for-small-unmanned-aircraft-system-uas-cases",
-  "latest": null
- },
- {
-  "slug": "sb1250-shield-u-act-stopping-harmful-incidents-to-enforce-lawful-drone-use-act",
-  "kind": "bill",
-  "title": "SHIELD U Act Stopping Harmful Incidents to Enforce Lawful Drone Use Act",
-  "tracks": [
-   "counter-uas-authority",
-   "fy2027-ndaa",
-   "public-safety"
-  ],
-  "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/senate-bill/1250/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-09-11",
-   "summary": "SB1250 now tracked. Latest action: Read twice and referred to the Committee on Commerce, Science, and Transportation. (2025-04-02)"
-  }
- },
- {
   "slug": "sb2506-skyfoundry-act-of-2025",
   "kind": "bill",
   "title": "SkyFoundry Act of 2025",
   "tracks": [
+   "defense-drones",
    "fy2027-ndaa",
    "industrial-base-exports"
   ],
@@ -1453,55 +561,11 @@
   }
  },
  {
-  "slug": "hb9909-small-unmanned-aircraft-systems-operational-test-evaluation-and-training",
-  "kind": "bill",
-  "title": "Small Unmanned Aircraft Systems Operational Test, Evaluation, and Training Corridor Act",
-  "tracks": [
-   "bvlos-airspace",
-   "fy2027-ndaa",
-   "industrial-base-exports"
-  ],
-  "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/house-bill/9909/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-09-11",
-   "summary": "HB9909 now tracked. Latest action: Referred to the House Committee on Armed Services. (2026-07-23)"
-  }
- },
- {
-  "slug": "spectrum-rules-and-policies-for-the-operation-of-unmanned-aircraft-systems",
-  "kind": "rulemaking",
-  "title": "Spectrum Rules and Policies for the Operation of Unmanned Aircraft Systems",
-  "tracks": [
-   "foreign-drone-restrictions"
-  ],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2025/01/08/2024-29967/spectrum-rules-and-policies-for-the-operation-of-unmanned-aircraft-systems",
-  "latest": null
- },
- {
-  "slug": "hb8458-star-act-stopping-theft-and-aerospace-reconnaissance-act",
-  "kind": "bill",
-  "title": "STAR Act Stopping Theft and Aerospace Reconnaissance Act",
-  "tracks": [
-   "counter-uas-authority",
-   "fy2027-ndaa"
-  ],
-  "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/house-bill/8458/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-09-11",
-   "summary": "HB8458 now tracked. Latest action: Referred to the House Committee on Science, Space, and Technology. (2026-04-22)"
-  }
- },
- {
   "slug": "sb4711-strategic-unmanned-systems-partnership-act",
   "kind": "bill",
   "title": "Strategic Unmanned Systems Partnership Act",
   "tracks": [
+   "defense-drones",
    "fy2027-ndaa",
    "industrial-base-exports"
   ],
@@ -1517,34 +581,21 @@
   "slug": "streamlining-export-controls-for-drone-exports",
   "kind": "rulemaking",
   "title": "Streamlining Export Controls for Drone Exports",
-  "tracks": [],
+  "tracks": [
+   "defense-drones",
+   "industrial-base-exports"
+  ],
   "analysis_url": null,
   "bill_url": null,
   "document_url": "https://www.federalregister.gov/documents/2026/08/28/C1-2026-16628/streamlining-export-controls-for-drone-exports",
   "latest": null
  },
  {
-  "slug": "sunshine-act-open-commission-meeting-thursday-november-19-2026",
-  "kind": "other",
-  "title": "Sunshine Act; Open Commission Meeting Thursday, November 19, 2026",
-  "tracks": [
-   "bvlos-airspace",
-   "counter-uas-authority",
-   "foreign-drone-restrictions"
-  ],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2026/11/18/2026-23467/sunshine-act-open-commission-meeting-thursday-november-19-2026",
-  "latest": {
-   "date": "2026-11-18",
-   "summary": "Federal Communications Commission: Notice, Sunshine Act; Open Commission Meeting Thursday, November 19, 2026"
-  }
- },
- {
   "slug": "sb4677-sustain-act-sustainment-of-unmanned-systems-total-force-aircraft-inventor",
   "kind": "bill",
   "title": "SUSTAIN Act Sustainment of Unmanned Systems, Total Force Aircraft Inventory, and National Guard Protection Act",
   "tracks": [
+   "defense-drones",
    "fy2027-ndaa",
    "industrial-base-exports"
   ],
@@ -1557,40 +608,41 @@
   }
  },
  {
-  "slug": "hb1386-to-establish-a-department-of-state-domestic-protection-mission-relating-t",
+  "slug": "hb7148-transportation-housing-and-urban-development-and-related-agencies-appropr",
   "kind": "bill",
-  "title": "To establish a Department of State Domestic Protection Mission relating to unmanned aircraft system and unmanned aircraft.",
+  "title": "Transportation, Housing and Urban Development, and Related Agencies Appropriations Act, 2026 Department of Transportation Appropriations Act, 2026 Department of Defense Appropriations Act, 2026 District of Columbia Appropriations Act, 2026 Judiciary Appropriations Act, 2026 Executive Office of the President Appropriations Act, 2026 Department of the Treasury Appropriations Act, 2026 Further Continuing Appropriations Act, 2026 Financial Services and General Government Appropriations Act, 2026 Department of Health and Human Services Appropriations Act, 2026 Department of Education Appropriations Act, 2026 Department of Housing and Urban Development Appropriations Act, 2026 Departments of Labor, Health and Human Services, and Education, and Related Agencies Appropriations Act, 2026 National Security, Department of State, and Related Programs Appropriations Act, 2026 Department of Labor Appropriations Act, 2026",
   "tracks": [
-   "counter-uas-authority",
-   "fy2027-ndaa"
+   "defense-drones"
   ],
   "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/house-bill/1386/all-info",
+  "bill_url": "https://www.congress.gov/bill/119th-congress/house-bill/7148/all-info",
   "document_url": null,
-  "latest": {
-   "date": "2026-09-11",
-   "summary": "HB1386 now tracked. Latest action: Referred to the Subcommittee on Aviation. (2025-02-14)"
-  }
+  "latest": null
  },
  {
-  "slug": "sb3920-uasi-act-unifying-american-security-interests-act",
-  "kind": "bill",
-  "title": "UASI Act Unifying American Security Interests Act",
-  "tracks": [],
+  "slug": "unleashing-american-drone-dominance",
+  "kind": "executive_action",
+  "title": "Unleashing American Drone Dominance",
+  "tracks": [
+   "bvlos-airspace",
+   "defense-drones",
+   "foreign-drone-restrictions",
+   "industrial-base-exports"
+  ],
   "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/senate-bill/3920/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-09-11",
-   "summary": "SB3920 now tracked. Latest action: Read twice and referred to the Committee on Homeland Security and Governmental Affairs. (2026-02-25)"
-  }
+  "bill_url": null,
+  "document_url": "https://www.federalregister.gov/documents/2025/06/11/2025-10814/unleashing-american-drone-dominance",
+  "latest": null
  },
  {
   "slug": "unleashing-american-drone-dominance-2",
   "kind": "other",
   "title": "Unleashing American Drone Dominance",
   "tracks": [
-   "foreign-drone-restrictions"
+   "bvlos-airspace",
+   "defense-drones",
+   "foreign-drone-restrictions",
+   "industrial-base-exports"
   ],
   "analysis_url": null,
   "bill_url": null,
@@ -1598,20 +650,11 @@
   "latest": null
  },
  {
-  "slug": "unleashing-american-drone-dominance",
-  "kind": "executive_action",
-  "title": "Unleashing American Drone Dominance",
-  "tracks": [],
-  "analysis_url": null,
-  "bill_url": null,
-  "document_url": "https://www.federalregister.gov/documents/2025/06/11/2025-10814/unleashing-american-drone-dominance",
-  "latest": null
- },
- {
   "slug": "sb4633-unmanned-and-autonomous-systems-strategy-act-of-2026",
   "kind": "bill",
   "title": "Unmanned and Autonomous Systems Strategy Act of 2026",
   "tracks": [
+   "defense-drones",
    "fy2027-ndaa",
    "industrial-base-exports"
   ],
@@ -1621,89 +664,6 @@
   "latest": {
    "date": "2026-09-11",
    "summary": "SB4633 now tracked. Latest action: Read twice and referred to the Committee on Armed Services. (2026-05-21)"
-  }
- },
- {
-  "slug": "sb4930-unmanned-system-command-and-control-integration-assessment-act-of-2026",
-  "kind": "bill",
-  "title": "Unmanned System Command and Control Integration Assessment Act of 2026",
-  "tracks": [
-   "bvlos-airspace",
-   "fy2027-ndaa",
-   "industrial-base-exports"
-  ],
-  "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/senate-bill/4930/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-09-11",
-   "summary": "SB4930 now tracked. Latest action: Read twice and referred to the Committee on Armed Services. (2026-06-24)"
-  }
- },
- {
-  "slug": "hb3334-uscp-empowerment-act-of-2025",
-  "kind": "bill",
-  "title": "USCP Empowerment Act of 2025",
-  "tracks": [
-   "counter-uas-authority",
-   "fy2027-ndaa",
-   "public-safety"
-  ],
-  "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/house-bill/3334/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-09-22",
-   "summary": "HB3334: record updated (sponsors, votes or details)"
-  }
- },
- {
-  "slug": "hb7178-u-s-israel-anti-killer-drone-act-of-2026",
-  "kind": "bill",
-  "title": "U.S.-Israel Anti-Killer Drone Act of 2026",
-  "tracks": [
-   "counter-uas-authority",
-   "fy2027-ndaa",
-   "industrial-base-exports"
-  ],
-  "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/house-bill/7178/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-09-11",
-   "summary": "HB7178 now tracked. Latest action: Referred to the Committee on Armed Services, and in addition to the Committee on Foreign Affairs, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned. (2026-01-21)"
-  }
- },
- {
-  "slug": "hb3433-wild-act-of-2025-wilderness-inclusion-for-limited-use-drones-act-of-2025",
-  "kind": "bill",
-  "title": "WILD Act of 2025 Wilderness Inclusion for Limited-use Drones Act of 2025",
-  "tracks": [
-   "bvlos-airspace",
-   "public-safety"
-  ],
-  "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/house-bill/3433/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-09-11",
-   "summary": "HB3433 now tracked. Latest action: Referred to the House Committee on Natural Resources. (2025-05-15)"
-  }
- },
- {
-  "slug": "hb6618-wildfire-aerial-response-safety-act",
-  "kind": "bill",
-  "title": "Wildfire Aerial Response Safety Act",
-  "tracks": [
-   "bvlos-airspace",
-   "public-safety"
-  ],
-  "analysis_url": null,
-  "bill_url": "https://www.congress.gov/bill/119th-congress/house-bill/6618/all-info",
-  "document_url": null,
-  "latest": {
-   "date": "2026-09-11",
-   "summary": "HB6618 now tracked. Latest action: Received in the Senate and Read twice and referred to the Committee on Commerce, Science, and Transportation. (2026-03-25)"
   }
  }
 ]

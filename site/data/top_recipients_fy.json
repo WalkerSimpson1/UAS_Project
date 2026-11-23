@@ -15,8 +15,18 @@
   "amount": 277255
  },
  {
+  "recipient": "AMSAN AIRPARTS CORP",
+  "awards": 1,
+  "amount": 241713
+ },
+ {
   "recipient": "EASY AERIAL INC",
   "awards": 1,
   "amount": 161200
+ },
+ {
+  "recipient": "JAFRI BROTHERS LLC",
+  "awards": 1,
+  "amount": 95627
  }
 ]

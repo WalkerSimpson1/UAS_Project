@@ -2,7 +2,7 @@
 
     .venv/Scripts/python scripts/summarize.py [--limit N] [--policy SLUG] [--redo] [--model sonnet]
 
-For each policy whose analysis is 'new' (oldest first), builds a fact sheet
+For each policy in an active track whose analysis is 'new' (oldest first; --all for every track), builds a fact sheet
 from the database (bill text summary, actions, sponsors; or rule documents,
 dates, commenters), asks Claude for a structured draft, and stores it in
 analyses (status -> 'ai_drafted'). Suggested tracks go into policy_tracks as
@@ -137,11 +137,18 @@ def ask_claude(prompt: str, model: str) -> tuple[dict, str]:
     return out["structured_output"], used
 
 
-def summarize(conn, limit=DEFAULT_LIMIT, slug=None, redo=False, model="sonnet", log=print) -> dict:
+ACTIVE_TRACK_SQL = "EXISTS (SELECT 1 FROM policy_tracks pt JOIN tracks t ON t.slug = pt.track_slug WHERE pt.policy_id = p.id AND t.status = 'active')"
+
+
+def summarize(conn, limit=DEFAULT_LIMIT, slug=None, redo=False, model="sonnet", log=print,
+              all_tracks=False) -> dict:
+    """Drafts policies in an 'active' track (P23) unless all_tracks or a slug is given."""
     tracks = conn.execute("SELECT slug, name, summary FROM tracks WHERE status <> 'archived' ORDER BY slug").fetchall()
     track_text = "\n".join(f"- {s}: {n}. {d}" for s, n, d in tracks)
     valid = {s for s, _, _ in tracks}
     where = "p.slug = %s" if slug else ("a.status IN ('new', 'ai_drafted')" if redo else "a.status = 'new'")
+    if not slug and not all_tracks:
+        where += f" AND {ACTIVE_TRACK_SQL}"
     todo = conn.execute(f"SELECT p.id, p.slug, p.kind, p.title FROM policies p JOIN analyses a ON a.policy_id = p.id"
                         f" WHERE {where} ORDER BY p.created_at, p.id LIMIT %s", ([slug] if slug else []) + [limit]).fetchall()
     stats = {"drafted": 0, "failed": 0, "left": 0}
@@ -168,7 +175,8 @@ def summarize(conn, limit=DEFAULT_LIMIT, slug=None, redo=False, model="sonnet", 
         conn.commit()
         stats["drafted"] += 1
         log(f"drafted {pslug}: {d['status_line']}")
-    stats["left"] = conn.execute("SELECT count(*) FROM analyses WHERE status = 'new'").fetchone()[0]
+    stats["left"] = conn.execute("SELECT count(*) FROM analyses a JOIN policies p ON p.id = a.policy_id"
+                                 f" WHERE a.status = 'new' AND {ACTIVE_TRACK_SQL}").fetchone()[0]
     return stats
 
 
@@ -177,10 +185,11 @@ def main() -> None:
     p.add_argument("--limit", type=int, default=DEFAULT_LIMIT)
     p.add_argument("--policy", help="one policy slug (drafts it again even if already drafted)")
     p.add_argument("--redo", action="store_true", help="also redo 'ai_drafted' ones")
+    p.add_argument("--all", action="store_true", help="include policies outside the active track(s)")
     p.add_argument("--model", default="sonnet")
     args = p.parse_args()
     with connect() as conn:
-        print(json.dumps(summarize(conn, args.limit, args.policy, args.redo, args.model), indent=1))
+        print(json.dumps(summarize(conn, args.limit, args.policy, args.redo, args.model, all_tracks=args.all), indent=1))
 
 
 if __name__ == "__main__":

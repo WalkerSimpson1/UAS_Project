@@ -97,7 +97,7 @@ class Api:
 
 def fr_dockets(conn, last_seen=None, start=None, end=None) -> dict[str, set[str]]:
     """{regulations.gov docket id: {FR document numbers}} from relevant FR rows."""
-    sql = ("SELECT document_number, docket_ids, title, abstract FROM regulatory_documents"
+    sql = ("SELECT document_number, docket_ids, title, abstract, agency_names FROM regulatory_documents"
            " WHERE source = 'federal_register'")
     args: list = []
     if last_seen is not None:
@@ -107,8 +107,8 @@ def fr_dockets(conn, last_seen=None, start=None, end=None) -> dict[str, set[str]
         sql += " AND publication_date BETWEEN %s AND %s"
         args += [start, end]
     out: dict[str, set[str]] = {}
-    for num, dockets, title, abstract in conn.execute(sql, args):
-        if not is_relevant(title, abstract):
+    for num, dockets, title, abstract, agencies in conn.execute(sql, args):
+        if not is_relevant(title, abstract, agencies):
             continue
         for text in dockets or []:
             for docket_id in docket_ids(text):

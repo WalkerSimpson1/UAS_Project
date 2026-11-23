@@ -8,6 +8,8 @@ Steps, each in its own transaction (a failed step is rolled back, the rest still
   1 weekly_feed     spending_by_transaction, last FEED_DAYS days -> contract_activity_feed
   2 txn_history     /transactions/ for each award in the feed -> contract_transactions
   3 award_search    spending_by_award, current FY (>= 120 days back) -> contract_awards
+  3a keyword_search  same period, counter-UAS keywords across all PSC codes -> contract_awards
+                     (source 'keyword_search'; not part of the PSC 1550 totals)
   3b coverage_pull  /transactions/ for awards modified in the past 7 days that step 2 skipped
   4 backfill        look up awards that transactions point to but contract_awards lacks
   5 integrity       count references still unresolved
@@ -32,6 +34,9 @@ AWARD_SEARCH_MIN_DAYS = 120   # DoD posts ~90 days late, so reach into the prior
 COVERAGE_DAYS = 7
 NEEDS_ATTENTION_ATTEMPTS = 4
 AWARD_KEY_RE = re.compile(r"^CONT_(AWD|IDV)_")
+# Counter-drone work is mostly bought under R&D and engineering PSC codes, not 1550 (P23).
+CUAS_KEYWORDS = ["counter-UAS", "counter UAS", "C-UAS", "counter-sUAS", "counter-unmanned", "counter-drone"]
+CUAS_RE = re.compile(r"COUNTER[- ]?(S?UAS|UNMANNED|DRONE|UAV)|\bC-S?UAS\b|\bCUAS\b", re.IGNORECASE)
 
 AWARD_FIELDS = [
     "generated_internal_id", "Award ID", "Recipient Name", "Awarding Agency", "Funding Agency",
@@ -262,6 +267,34 @@ class WeeklyRun:
                                       "psc_not_1550": sum(r["psc_code"] not in (None, "1550") for r in rows.values())}
         return set(rows)
 
+    def keyword_search(self, psc_keys: set[str]) -> set[str]:
+        """3a: counter-UAS awards outside PSC 1550, same period as award_search, description must match CUAS_RE."""
+        fy_start = dt.date(fiscal_year(self.run_date) - 1, 10, 1)
+        start = min(fy_start, self.run_date - dt.timedelta(days=AWARD_SEARCH_MIN_DAYS))
+        period = {"start_date": start.isoformat(), "end_date": (self.run_date - dt.timedelta(days=1)).isoformat()}
+        body = {"subawards": False, "limit": 100, "fields": AWARD_FIELDS,
+                "filters": {"award_type_codes": AWARD_TYPES, "keywords": CUAS_KEYWORDS, "time_period": [period]}}
+        rows, skipped = {}, 0
+        for r, rel in self.paged("awards_counter_uas", "/search/spending_by_award/", body):
+            key = r.get("generated_internal_id")
+            if not key or key in psc_keys or not CUAS_RE.search(r.get("Description") or ""):
+                skipped += 1
+                continue
+            rows[key] = {**award_row(r), "raw_source": rel}
+        known_1550 = {k for (k,) in self.conn.execute(
+            "SELECT award_key FROM contract_awards WHERE award_key = ANY(%s) AND source <> 'keyword_search'",
+            (list(rows),))}
+        new = 0
+        for key, row in rows.items():
+            if key in known_1550:
+                continue
+            new += upsert(self.conn, "contract_awards", {
+                **row, "source": "keyword_search", "lookup_status": "ok", "backfill": None,
+                "first_seen": self.run_date, "last_seen": self.run_date,
+            }, ("award_key",), ("first_seen",))
+        self.steps["keyword_search"] = {**period, "results": len(rows), "new_awards": new, "skipped": skipped}
+        return set(rows)
+
     # ------------------------------------------------------------ 3b
 
     def coverage_pull(self, already_fetched: set[str]) -> None:
@@ -353,7 +386,8 @@ def weekly(conn, run_date=None, feed_days=FEED_DAYS, backfill_method="award_uniq
     run = WeeklyRun(conn, run_date or dt.date.today(), feed_days, run_tag, parent_id)
     feed = run.step("weekly_feed", run.weekly_feed) or {}
     run.step("txn_history", run.transaction_history, set(feed), "weekly_feed", "txn_history")
-    run.step("award_search", run.award_search)
+    psc_keys = run.step("award_search", run.award_search) or set()
+    run.step("keyword_search", run.keyword_search, psc_keys)
     if coverage_pull:
         run.step("coverage_pull", run.coverage_pull, set(feed))
     run.step("backfill", run.backfill, backfill_method)

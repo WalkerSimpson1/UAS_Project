@@ -31,6 +31,9 @@ from pg_common import connect
 from regulations_loader import docket_ids
 
 OLD_DOC_DAYS = 30
+# Recurring notices with no docket that belong together as one policy (P23); each new one is an event.
+SERIES = [(re.compile(r"^Arms Sales Notification$", re.IGNORECASE), "arms-sales",
+           "Arms sales notifications involving drones")]
 
 
 def slugify(text: str, max_len=80) -> str:
@@ -112,6 +115,12 @@ class Sync:
                 history = raw.get("history") or []
                 last = history[-1] if history else {}
                 if prev is None:
+                    # A bill whose last action is OLD_DOC_DAYS older than when we first saw it (a backfill,
+                    # or a watch rule added later) is context: tracked, but no "new" event.
+                    last_date = to_date(last.get("date"))
+                    if last_date and (snap_date - last_date).days > OLD_DOC_DAYS:
+                        prev = raw
+                        continue
                     self.event(pid, snap_date, "new",
                                f"{ident} now tracked. Latest action: {last.get('action', 'none')} ({last.get('date', '?')})",
                                "bills", bid, snap_date)
@@ -141,7 +150,7 @@ class Sync:
                 " FROM regulatory_documents ORDER BY publication_date NULLS LAST, id"):
             d = dict(zip(("id", "source", "num", "fr_num", "title", "abstract", "type", "agencies", "docket_id",
                           "docket_ids", "rin", "pub", "close", "first_seen", "raw"), row))
-            if d["source"] == "federal_register" and not is_relevant(d["title"], d["abstract"]):
+            if d["source"] == "federal_register" and not is_relevant(d["title"], d["abstract"], d["agencies"]):
                 continue
             docs[d["id"]] = d
         fr_by_num = {d["num"]: i for i, d in docs.items() if d["source"] == "federal_register"}
@@ -165,6 +174,7 @@ class Sync:
                     for k in docket_ids(t)]
             if d["rin"]:
                 keys.append(f"rin:{d['rin']}")
+            keys += [f"series:{key}" for rx, key, _ in SERIES if rx.match(d["title"] or "")]
             if d["fr_num"] and d["fr_num"] in fr_by_num:
                 union(i, fr_by_num[d["fr_num"]])
             for k in keys:
@@ -190,7 +200,8 @@ class Sync:
                              and docs[i]["type"] in ("Rule", "Proposed Rule")), None) \
                     or next((docs[i] for i in reversed(members) if docs[i]["source"] == "federal_register"), None) \
                     or docs[members[-1]]
-                pid = self.new_policy(kind, lead["title"] or lead["id"], lead["title"] or lead["id"])
+                title = next((t for rx, _, t in SERIES if rx.match(lead["title"] or "")), lead["title"] or lead["id"])
+                pid = self.new_policy(kind, title, title)
             first_event = True  # the earliest eventful document is the policy's "new"
             for i in members:
                 d = docs[i]

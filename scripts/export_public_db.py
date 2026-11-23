@@ -22,8 +22,8 @@ DB = OUT / "uas_public.db"
 
 # (table, SELECT on Postgres, column notes). Columns come out in SELECT order.
 TABLES = [
-    ("tracks", "SELECT slug, name, summary, substack_url FROM tracks WHERE status <> 'archived'",
-     "Loose groupings of related policies."),
+    ("tracks", "SELECT slug, name, summary, status, substack_url FROM tracks WHERE status <> 'archived'",
+     "Groupings of related policies. status 'active' = the published focus; 'draft' = watch list."),
     ("policies", """SELECT p.id, p.slug, p.kind, p.title, p.created_at::date AS tracked_since,
                            CASE WHEN a.status = 'published' THEN 'published'
                                 WHEN a.status = 'not_relevant' THEN 'not_relevant' ELSE 'tracked' END AS status,
@@ -60,10 +60,11 @@ TABLES = [
                                FROM regulatory_comments""",
      "Public comments on tracked dockets (organization only; details fill in over time)."),
     ("contract_awards", """SELECT award_key, award_id, recipient, awarding_agency, funding_agency, naics_code,
-                                  description, amount_usd, award_base_date, last_modified_at::date AS last_modified,
+                                  psc_code, source, description, amount_usd, award_base_date, last_modified_at::date AS last_modified,
                                   'https://www.usaspending.gov/award/' || award_key AS url
                            FROM contract_awards WHERE lookup_status = 'ok'""",
-     "Drone (PSC 1550) awards from the weekly USASpending pull: current and recent fiscal years."),
+     "Awards from the weekly USASpending pull, current and recent fiscal years: source 'award_search' = drones"
+     " (PSC 1550); 'keyword_search' = counter-UAS awards under other PSC codes (not in the 1550 totals)."),
     ("contract_actions_recent", """SELECT award_key, mod, action_date, recipient_name, awarding_agency, award_type,
                                           transaction_description, transaction_amount, late_posting
                                    FROM contract_activity_feed""",

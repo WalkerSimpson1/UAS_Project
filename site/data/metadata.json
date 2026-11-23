@@ -5,7 +5,7 @@
   "uas_public": {
    "tables": {
     "tracks": {
-     "description": "Loose groupings of related policies."
+     "description": "Groupings of related policies. status 'active' = the published focus; 'draft' = watch list."
     },
     "policies": {
      "description": "One thing analyzed: a bill with its companions, a rulemaking with its documents, an executive action."
@@ -35,7 +35,7 @@
      "description": "Public comments on tracked dockets (organization only; details fill in over time)."
     },
     "contract_awards": {
-     "description": "Drone (PSC 1550) awards from the weekly USASpending pull: current and recent fiscal years."
+     "description": "Awards from the weekly USASpending pull, current and recent fiscal years: source 'award_search' = drones (PSC 1550); 'keyword_search' = counter-UAS awards under other PSC codes (not in the 1550 totals)."
     },
     "contract_actions_recent": {
      "description": "Contract actions from the weekly 14-day feed (posted late = more than 7 days after the action date)."

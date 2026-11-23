@@ -33,12 +33,14 @@ def export(conn) -> dict:
     data["weekly"] = rows(conn, """
         SELECT detected_on, event_date, event_type, summary, slug, kind, title, tracks,
                CASE WHEN analysis_status = 'published' THEN substack_url END AS analysis_url
-        FROM weekly_changes ORDER BY event_date DESC, slug""")
+        FROM weekly_changes w
+        WHERE EXISTS (SELECT 1 FROM policies p WHERE p.slug = w.slug AND EXISTS (SELECT 1 FROM policy_tracks pt JOIN tracks t ON t.slug = pt.track_slug WHERE pt.policy_id = p.id AND t.status = 'active'))
+        ORDER BY event_date DESC, slug""")
     data["tracks"] = rows(conn, """
         SELECT t.slug, t.name, t.summary, t.substack_url, count(pt.policy_id) AS policies
         FROM tracks t LEFT JOIN policy_tracks pt ON pt.track_slug = t.slug
         LEFT JOIN analyses a ON a.policy_id = pt.policy_id AND a.status = 'not_relevant'
-        WHERE t.status <> 'archived' AND a.policy_id IS NULL
+        WHERE t.status = 'active' AND a.policy_id IS NULL
         GROUP BY t.slug ORDER BY count(pt.policy_id) DESC""")
     data["policies"] = rows(conn, """
         SELECT p.slug, p.kind, p.title,
@@ -55,7 +57,7 @@ def export(conn) -> dict:
                   WHERE e.policy_id = p.id ORDER BY e.event_date DESC, e.id DESC LIMIT 1) AS latest
         FROM policies p JOIN analyses a ON a.policy_id = p.id
         LEFT JOIN policy_tracks pt ON pt.policy_id = p.id
-        WHERE a.status <> 'not_relevant'
+        WHERE a.status <> 'not_relevant' AND EXISTS (SELECT 1 FROM policy_tracks pt JOIN tracks t ON t.slug = pt.track_slug WHERE pt.policy_id = p.id AND t.status = 'active')
         GROUP BY p.id, a.status, a.substack_url ORDER BY p.title""")
     # Monthly obligations, PSC 1550, from the complete bulk downloads (FY2020 on; refreshed with backfill.py contracts). The weekly
     # API pull only sees transactions on awards it touches, so it isn't a full monthly total.

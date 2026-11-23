@@ -35,6 +35,10 @@ ZIP_NAME_RE = re.compile(r"getDatasetRaw(\d{4}-\d{2}-\d{2})\.zip$")
 # Bills with drone provisions whose title and description don't say so
 # (bill_number as LegiScan writes it). The FY2027 NDAA: House and Senate.
 WATCH_BILLS = {"HB8800", "SB4784"}
+# Must-pass defense bills carry drone provisions without saying so in the title (P23).
+# The bills themselves, not ones that amend an earlier NDAA ("To amend the National Defense ...").
+WATCH_TITLE_RE = re.compile(r"^(?!(a bill )?to (amend|make)\b).*(national defense authorization act for fiscal year"
+                            r"|department of defense appropriations act,) (19|20)\d\d", re.IGNORECASE)
 
 
 # ---------------------------------------------------------------- reading zips
@@ -46,7 +50,7 @@ def read_bills(zip_path) -> list[dict]:
 
 def is_uas(bill: dict) -> bool:
     """Substring match on title + description (unchanged from the Mongo loader), plus WATCH_BILLS."""
-    if bill.get("bill_number") in WATCH_BILLS:
+    if bill.get("bill_number") in WATCH_BILLS or WATCH_TITLE_RE.search(bill.get("title") or ""):
         return True
     text = (bill["title"] + " " + (bill.get("description") or "")).lower()
     return any(word in text for word in KEYWORDS)

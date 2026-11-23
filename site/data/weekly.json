@@ -2,32 +2,6 @@
  {
   "detected_on": "2026-11-23",
   "event_date": "2026-11-23",
-  "event_type": "new_comments",
-  "summary": "3 new public comments on DOT-OST-2026-3367",
-  "slug": "60-day-notice-of-proposed-information-collection-information-collection-request",
-  "kind": "other",
-  "title": "60-Day Notice of Proposed Information Collection: Information Collection Request (ICR) for the Drone Infrastructure Inspection Grant (DIIG) Program",
-  "tracks": [],
-  "analysis_url": null
- },
- {
-  "detected_on": "2026-11-23",
-  "event_date": "2026-11-23",
-  "event_type": "new",
-  "summary": "HB8800 now tracked. Latest action: Received in the Senate. (2026-09-14)",
-  "slug": "fy2027-ndaa",
-  "kind": "bill",
-  "title": "National Defense Authorization Act for Fiscal Year 2027 (H.R. 8800 / S. 4784)",
-  "tracks": [
-   "counter-uas-authority",
-   "fy2027-ndaa",
-   "industrial-base-exports"
-  ],
-  "analysis_url": null
- },
- {
-  "detected_on": "2026-11-23",
-  "event_date": "2026-11-23",
   "event_type": "other",
   "summary": "HB2939: record updated (sponsors, votes or details)",
   "slug": "hb2939-drone-espionage-act",
@@ -35,51 +9,9 @@
   "title": "Drone Espionage Act",
   "tracks": [
    "counter-uas-authority",
+   "defense-drones",
    "foreign-drone-restrictions",
    "fy2027-ndaa"
-  ],
-  "analysis_url": null
- },
- {
-  "detected_on": "2026-11-23",
-  "event_date": "2026-11-23",
-  "event_type": "other",
-  "summary": "HB8697: record updated (sponsors, votes or details)",
-  "slug": "hb8697-guard-the-skies-act",
-  "kind": "bill",
-  "title": "Guard the Skies Act",
-  "tracks": [
-   "counter-uas-authority",
-   "fy2027-ndaa",
-   "public-safety"
-  ],
-  "analysis_url": null
- },
- {
-  "detected_on": "2026-11-23",
-  "event_date": "2026-11-23",
-  "event_type": "new",
-  "summary": "SB5716 now tracked. Latest action: Read twice and referred to the Committee on Armed Services. (2026-11-11)",
-  "slug": "hb8697-guard-the-skies-act",
-  "kind": "bill",
-  "title": "Guard the Skies Act",
-  "tracks": [
-   "counter-uas-authority",
-   "fy2027-ndaa",
-   "public-safety"
-  ],
-  "analysis_url": null
- },
- {
-  "detected_on": "2026-11-23",
-  "event_date": "2026-11-23",
-  "event_type": "new_comments",
-  "summary": "1 new public comment on DOT-OST-2026-3862",
-  "slug": "privacy-act-of-1974-system-of-records",
-  "kind": "other",
-  "title": "Privacy Act of 1974; System of Records",
-  "tracks": [
-   "bvlos-airspace"
   ],
   "analysis_url": null
  },
@@ -92,6 +24,7 @@
   "kind": "bill",
   "title": "Strategic Unmanned Systems Partnership Act",
   "tracks": [
+   "defense-drones",
    "fy2027-ndaa",
    "industrial-base-exports"
   ],
@@ -99,96 +32,27 @@
  },
  {
   "detected_on": "2026-11-23",
-  "event_date": "2026-11-18",
+  "event_date": "2026-11-20",
   "event_type": "new",
-  "summary": "Federal Communications Commission: Notice, Sunshine Act; Open Commission Meeting Thursday, November 19, 2026",
-  "slug": "sunshine-act-open-commission-meeting-thursday-november-19-2026",
+  "summary": "Office of the Secretary: Notice, Arms Sales Notification",
+  "slug": "arms-sales-notifications-involving-drones",
   "kind": "other",
-  "title": "Sunshine Act; Open Commission Meeting Thursday, November 19, 2026",
+  "title": "Arms sales notifications involving drones",
   "tracks": [
-   "bvlos-airspace",
-   "counter-uas-authority",
-   "foreign-drone-restrictions"
+   "defense-drones"
   ],
   "analysis_url": null
  },
  {
   "detected_on": "2026-11-23",
-  "event_date": "2026-11-10",
+  "event_date": "2026-11-20",
   "event_type": "new_document",
-  "summary": "FAA: Supporting & Related Material, U.S. DOT/FAA - Inspection Programs for Single-Engine Turbine-Powered Airplanes and Unmanned Aircraft; and Miscellaneous Maintenance-Related Updates - Final Rule - Regulatory Impact Analysis (April 2026)",
-  "slug": "inspection-programs-for-single-engine-turbine-powered-airplanes-and-unmanned-air",
-  "kind": "rulemaking",
-  "title": "Inspection Programs for Single-Engine Turbine-Powered Airplanes and Unmanned Aircraft; and Miscellaneous Maintenance-Related Updates",
-  "tracks": [
-   "bvlos-airspace"
-  ],
-  "analysis_url": null
- },
- {
-  "detected_on": "2026-11-23",
-  "event_date": "2026-11-10",
-  "event_type": "new",
-  "summary": "Federal Aviation Administration: Rule, Inspection Programs for Single-Engine Turbine-Powered Airplanes and Unmanned Aircraft; and Miscellaneous Maintenance-Related Updates",
-  "slug": "inspection-programs-for-single-engine-turbine-powered-airplanes-and-unmanned-air",
-  "kind": "rulemaking",
-  "title": "Inspection Programs for Single-Engine Turbine-Powered Airplanes and Unmanned Aircraft; and Miscellaneous Maintenance-Related Updates",
-  "tracks": [
-   "bvlos-airspace"
-  ],
-  "analysis_url": null
- },
- {
-  "detected_on": "2026-11-23",
-  "event_date": "2026-11-04",
-  "event_type": "new",
-  "summary": "Justice Department: Notice, Agency Information Collection Activities; Proposed eCollection eComments Requested; SAFER SKIES State, Local, Tribal, and Territorial Counter-UAS Information Collection",
-  "slug": "agency-information-collection-activities-proposed-ecollection-ecomments-requeste",
+  "summary": "Office of the Secretary: Notice, Arms Sales Notification",
+  "slug": "arms-sales-notifications-involving-drones",
   "kind": "other",
-  "title": "Agency Information Collection Activities; Proposed eCollection eComments Requested; SAFER SKIES State, Local, Tribal, and Territorial Counter-UAS Information Collection",
+  "title": "Arms sales notifications involving drones",
   "tracks": [
-   "counter-uas-authority",
-   "public-safety"
-  ],
-  "analysis_url": null
- },
- {
-  "detected_on": "2026-11-23",
-  "event_date": "2026-11-04",
-  "event_type": "comment_period",
-  "summary": "Comments due 2026-12-04",
-  "slug": "agency-information-collection-activities-proposed-ecollection-ecomments-requeste",
-  "kind": "other",
-  "title": "Agency Information Collection Activities; Proposed eCollection eComments Requested; SAFER SKIES State, Local, Tribal, and Territorial Counter-UAS Information Collection",
-  "tracks": [
-   "counter-uas-authority",
-   "public-safety"
-  ],
-  "analysis_url": null
- },
- {
-  "detected_on": "2026-11-23",
-  "event_date": "2026-11-03",
-  "event_type": "new",
-  "summary": "Office of the Secretary: Notice, Privacy Act of 1974; System of Records",
-  "slug": "privacy-act-of-1974-system-of-records",
-  "kind": "other",
-  "title": "Privacy Act of 1974; System of Records",
-  "tracks": [
-   "bvlos-airspace"
-  ],
-  "analysis_url": null
- },
- {
-  "detected_on": "2026-11-23",
-  "event_date": "2026-11-03",
-  "event_type": "comment_period",
-  "summary": "Comments due 2026-12-03",
-  "slug": "privacy-act-of-1974-system-of-records",
-  "kind": "other",
-  "title": "Privacy Act of 1974; System of Records",
-  "tracks": [
-   "bvlos-airspace"
+   "defense-drones"
   ],
   "analysis_url": null
  },
@@ -201,6 +65,7 @@
   "kind": "bill",
   "title": "Block the Use of Transatlantic Technology in Iranian Made Drones Act",
   "tracks": [
+   "defense-drones",
    "foreign-drone-restrictions",
    "fy2027-ndaa",
    "industrial-base-exports"
