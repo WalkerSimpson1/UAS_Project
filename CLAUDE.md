@@ -30,7 +30,7 @@ There is no test suite or linter. Dependencies are pinned in `requirements.txt`,
 - `summarize.py`: `claude -p --tools "" --json-schema ...` with a per-kind fact sheet; drafts only policies in an `active` track (`--all` for the rest); writes `analyses.ai_*`, sets `ai_drafted`, adds `assigned_by='ai'` track suggestions. Never overwrites human fields.
 - `export_public_db.py`: `site/data/uas_public.db` + `metadata.json` (recommended queries, shown with copy/run buttons on `site/index.html#query`).
 - `backfill.py`: one-off FR / Regulations.gov / bulk-contracts backfills (P19).
-- `export_site.py`: `site/data/*.json` for `site/index.html`, a one-page weekly analytics dashboard (P25: headline numbers, obligations by FY, policies by lever, top recipients) plus the query section. The tracker itself is the Substack; the site has no policy lists. Deletes stale JSON from older layouts.
+- `export_site.py`: `site/data/*.json` for `site/index.html`, a one-page weekly analytics dashboard (P25: headline numbers, obligations by FY, policies by lever, top recipients) plus the query section. The tracker itself is the Substack; the site has no policy lists. Deletes stale JSON from older layouts. Also writes `site/data/csv/*.csv` for Datawrapper (P28); keep those column names stable.
 - `migrate_mongo_to_pg.py`: the one-time import (done 2026-11-23, P9).
 - `analysis/USASpending_Past_Visualizations.ipynb` reads Postgres via `pg_common.read_sql`.
 

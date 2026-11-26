@@ -32,11 +32,12 @@ TABLES = [
      "Story tags on policies (China, industrial base, allies, military programs, counter-drone). A policy can have several."),
     ("policy_themes", "SELECT policy_id, theme_slug, assigned_by FROM policy_themes WHERE NOT excluded",
      "Which themes each policy carries. assigned_by: rule or human."),
-    ("policies", """SELECT p.id, p.slug, p.kind, p.title, p.lever, p.created_at::date AS tracked_since,
+    ("policies", """SELECT p.id, p.slug, p.kind, p.title, p.lever, st.stage, st.stage_rank, p.created_at::date AS tracked_since,
                            CASE WHEN a.status = 'published' THEN 'published'
                                 WHEN a.status = 'not_relevant' THEN 'not_relevant' ELSE 'tracked' END AS status,
                            CASE WHEN a.status = 'published' THEN a.substack_url END AS analysis_url
-                    FROM policies p JOIN analyses a ON a.policy_id = p.id""",
+                    FROM policies p JOIN analyses a ON a.policy_id = p.id
+                    LEFT JOIN policy_stage st ON st.policy_id = p.id""",
      "One thing analyzed: a bill with its companions, a rulemaking with its documents, an executive action."),
     ("policy_tracks", "SELECT policy_id, track_slug, assigned_by, confirmed FROM policy_tracks",
      "Which tracks each policy is in. assigned_by: rule, ai or human; confirmed = reviewed by the author."),

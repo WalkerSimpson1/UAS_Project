@@ -257,6 +257,7 @@ Once validation passes, `weekly_run.py` produces three outputs and prunes old ba
    - `levers.json`: policies per lever in the active track
    - `themes.json`: policies per theme (tags; a policy can have several)
    - `obligations_by_fy.json`, `top_recipients.json`: PSC 1550 obligations by fiscal year and the top recipients of the latest year
+   - `csv/*.csv`: tables for Datawrapper embeds on Substack, linked by URL so they update weekly (e.g. `https://walkersimpson1.github.io/UAS_Project/data/csv/weekly_changes.csv`): weekly changes, all policies, one file per theme, theme × lever counts, obligations by FY (DoD vs other), top recipients, counter-drone awards
 2. **Public database:** `export_public_db.py` writes `uas_public.db` (SQLite) and `metadata.json` with recommended queries. See [Live Database](#live-database).
 3. **Publish:** with `--publish`, the run commits `site/data` and pushes it to `main`, and the GitHub Actions workflow deploys `site/` to GitHub Pages.
 4. **Prune:** keeps the last 12 end-of-run dumps and the last 2 pre-run dumps.
