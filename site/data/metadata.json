@@ -1,11 +1,14 @@
 {
  "title": "U.S. Drone Policy Tracker: public data",
- "description": "Exported 2026-11-23. Sources: LegiScan, Federal Register, Regulations.gov, USASpending.gov. Policy groupings and tracks by the author.",
+ "description": "Exported 2026-11-24. Sources: LegiScan, Federal Register, Regulations.gov, USASpending.gov. Policy groupings and tracks by the author.",
  "databases": {
   "uas_public": {
    "tables": {
     "tracks": {
      "description": "Groupings of related policies. status 'active' = the published focus; 'draft' = watch list."
+    },
+    "levers": {
+     "description": "Policy levers inside a track: funding, buying rules, trade controls, foreign bans, other."
     },
     "policies": {
      "description": "One thing analyzed: a bill with its companions, a rulemaking with its documents, an executive action."
@@ -55,6 +58,10 @@
     "policies_by_track": {
      "title": "Policies per track",
      "sql": "select t.name, count(*) as policies, sum(p.kind = 'bill') as bills, sum(p.kind = 'rulemaking') as rulemakings\nfrom policy_tracks pt join tracks t on t.slug = pt.track_slug join policies p on p.id = pt.policy_id\nwhere p.status <> 'not_relevant' group by t.name order by policies desc"
+    },
+    "policies_by_lever": {
+     "title": "Defense policies by lever",
+     "sql": "select l.name as lever, count(p.id) as policies, sum(p.kind = 'bill') as bills,\n       sum(p.kind = 'rulemaking') as rulemakings,\n       max((select max(event_date) from policy_events e where e.policy_id = p.id)) as last_change\nfrom levers l left join policies p on p.lever = l.slug and p.status <> 'not_relevant'\ngroup by l.slug order by l.sort_order"
     },
     "track_policies": {
      "title": "Everything in one track, latest change first",

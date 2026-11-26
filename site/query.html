@@ -3,77 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Query the data · U.S. Drone Policy Tracker</title>
-<style>
-  :root { color-scheme: light; --surface-0: #f6f5f2; --surface-1: #fcfcfb; --border: #e2e0da; --grid: #ebe9e4;
-          --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #6f6e69; --accent: #1c5cab; --code: #f0efec; }
-  @media (prefers-color-scheme: dark) {
-    :root { color-scheme: dark; --surface-0: #121211; --surface-1: #1a1a19; --border: #33332f; --grid: #2a2a27;
-            --text-primary: #f0efec; --text-secondary: #c3c2b7; --text-muted: #9a998f; --accent: #86b6ef; --code: #262624; }
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--surface-0); color: var(--text-primary); font: 15px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
-  main { max-width: 960px; margin: 0 auto; padding: 24px 20px 64px; }
-  h1 { font-size: 26px; margin: 0; } h2 { font-size: 18px; margin: 0 0 6px; }
-  .sub { color: var(--text-secondary); margin: 4px 0 0; } .muted { color: var(--text-muted); font-size: 13px; }
-  section { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; margin-top: 18px; }
-  a { color: var(--accent); }
-  .btn { display: inline-block; border: 1px solid var(--border); border-radius: 8px; padding: 7px 14px; text-decoration: none;
-         color: var(--text-primary); background: var(--surface-0); margin: 6px 8px 0 0; font-weight: 600; }
-  .q { border-top: 1px solid var(--grid); padding: 12px 0; }
-  .q:first-of-type { border-top: 0; }
-  .q h3 { font-size: 15px; margin: 0 0 6px; }
-  pre { background: var(--code); border-radius: 6px; padding: 10px 12px; overflow-x: auto; font-size: 12.5px; margin: 6px 0 0; }
-  table { border-collapse: collapse; width: 100%; font-size: 14px; }
-  td, th { text-align: left; border-bottom: 1px solid var(--grid); padding: 6px 8px 6px 0; vertical-align: top; }
-  th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-secondary); }
-  code { background: var(--code); border-radius: 4px; padding: 0 4px; font-size: 13px; }
-</style>
+<title>Query the Data</title>
+<meta http-equiv="refresh" content="0; url=./#query">
+<link rel="canonical" href="./#query">
+<style>body { font: 15px/1.5 system-ui, sans-serif; margin: 40px 16px; background: #eceae4; color: #111; }
+@media (prefers-color-scheme: dark) { body { background: #0f1012; color: #f1f0ec; } a { color: #8cbaf0; } }</style>
 </head>
 <body>
-<main>
-  <p class="muted"><a href="./">← Dashboard</a></p>
-  <h1>Query the data</h1>
-  <p class="sub">The tracker's public tables as one SQLite file, refreshed weekly. Run SQL in your browser, or download the file.</p>
-
-  <section>
-    <h2>Open it</h2>
-    <a class="btn" id="open">Open in Datasette Lite</a>
-    <a class="btn" href="data/uas_public.db" download>Download uas_public.db</a>
-    <p class="muted" id="meta">Datasette Lite runs entirely in your browser (it loads in about 10 seconds). The download opens in any SQLite tool, e.g. <code>sqlite3 uas_public.db</code> or DB Browser for SQLite.</p>
-  </section>
-
-  <section>
-    <h2>Recommended queries</h2>
-    <p class="muted">Each opens with its SQL, ready to edit.</p>
-    <div id="queries"></div>
-  </section>
-
-  <section>
-    <h2>Tables</h2>
-    <table><thead><tr><th>Table</th><th>What it holds</th></tr></thead><tbody id="tables"></tbody></table>
-    <p class="muted">Joins: <code>policies.id</code> = <code>policy_tracks.policy_id</code> = <code>policy_events.policy_id</code> = <code>policy_sources.policy_id</code>;
-      <code>policy_sources.source_id</code> is a <code>bills.bill_id</code> or <code>regulatory_documents.id</code>.
-      Use <code>bulk_transactions</code> for market totals; the weekly contract tables only cover awards the pipeline touched.
-      Not included: AI drafts, the author's notes, raw API payloads and commenters' names.</p>
-  </section>
-</main>
-<script>
-const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
-const dbUrl = new URL("data/uas_public.db", location.href).href;
-const metaUrl = new URL("data/metadata.json", location.href).href;
-const lite = (hash = "") => `https://lite.datasette.io/?url=${encodeURIComponent(dbUrl)}&metadata=${encodeURIComponent(metaUrl)}${hash}`;
-document.getElementById("open").href = lite("#/uas_public");
-
-fetch("data/metadata.json").then((r) => r.json()).then((meta) => {
-  const db = meta.databases.uas_public;
-  document.getElementById("meta").insertAdjacentHTML("beforeend", ` ${esc(meta.description)}`);
-  document.getElementById("queries").innerHTML = Object.entries(db.queries).map(([name, q]) => `
-    <div class="q"><h3><a href="${lite("#/uas_public/" + name)}">${esc(q.title)}</a></h3>
-    <pre>${esc(q.sql)}</pre></div>`).join("");
-  document.getElementById("tables").innerHTML = Object.entries(db.tables).map(([t, d]) =>
-    `<tr><td><a href="${lite("#/uas_public/" + t)}"><code>${esc(t)}</code></a></td><td>${esc(d.description)}</td></tr>`).join("");
-});
-</script>
+<p>The queries moved to the dashboard: <a href="./#query">open them here</a>.</p>
 </body>
 </html>

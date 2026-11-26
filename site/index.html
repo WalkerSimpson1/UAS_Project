@@ -3,366 +3,234 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Defense Drone Policy Tracker</title>
-<meta name="description" content="Weekly changes in U.S. defense drone legislation, rulemaking and federal contracts.">
+<title>Defense Drone Dashboard</title>
+<meta name="description" content="Weekly analytics on U.S. defense drone policy and federal drone contracts, with an open SQL database.">
 <style>
   :root {
     color-scheme: light;
     --page: #eceae4; --surface: #ffffff; --surface-2: #f7f6f2; --border: #dedbd2; --grid: #ebe9e3;
     --text-primary: #111111; --text-secondary: #4d4c48; --text-muted: #6d6c66;
-    --series-1: #2a78d6; --accent: #1c5cab; --chip: #e9f0fa;
+    --series-1: #2a78d6; --accent: #1c5cab; --code: #f3f2ee;
     --band-1: #14233b; --band-2: #23426b; --band-text: #f3f5f8; --band-muted: #b7c3d6;
     --shadow-1: 0 1px 2px rgba(20, 24, 33, .06), 0 2px 6px rgba(20, 24, 33, .06);
     --shadow-2: 0 2px 4px rgba(20, 24, 33, .06), 0 10px 24px rgba(20, 24, 33, .10);
   }
   @media (prefers-color-scheme: dark) {
-    :root {
+    :root:not([data-theme="light"]) {
       color-scheme: dark;
       --page: #0f1012; --surface: #1b1c1f; --surface-2: #222327; --border: #33343a; --grid: #2a2b30;
       --text-primary: #f1f0ec; --text-secondary: #c4c3bb; --text-muted: #9a9991;
-      --series-1: #3987e5; --accent: #8cbaf0; --chip: #1f2b3c;
+      --series-1: #3987e5; --accent: #8cbaf0; --code: #24252a;
       --band-1: #0b1424; --band-2: #183154; --band-text: #eef2f8; --band-muted: #9fb0c8;
       --shadow-1: 0 1px 2px rgba(0, 0, 0, .4), 0 2px 6px rgba(0, 0, 0, .3);
       --shadow-2: 0 2px 4px rgba(0, 0, 0, .4), 0 12px 28px rgba(0, 0, 0, .45);
     }
   }
   * { box-sizing: border-box; }
-  html, body { height: 100%; }
-  body { margin: 0; background: var(--page); color: var(--text-primary);
-         font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; display: flex; flex-direction: column; }
+  body { margin: 0; background: var(--page); color: var(--text-primary); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
   a { color: var(--accent); }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
 
-  /* Top band: title + page tabs */
-  .band { background: linear-gradient(135deg, var(--band-1), var(--band-2)); color: var(--band-text);
-          box-shadow: 0 4px 18px rgba(10, 20, 40, .25); position: sticky; top: 0; z-index: 5; }
-  .band-inner { padding: 18px 40px 0; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 8px 24px; }
-  .band h1 { font-size: 22px; margin: 0; letter-spacing: -0.01em; }
-  .band .sub { margin: 2px 0 14px; color: var(--band-muted); font-size: 14px; }
-  .band .updated { color: var(--band-muted); font-size: 13px; margin-bottom: 14px; }
-  nav { display: flex; gap: 4px; padding: 0 32px; overflow-x: auto; }
-  nav a { color: var(--band-muted); text-decoration: none; padding: 10px 16px 12px; font-weight: 600; font-size: 14px;
-          border-radius: 10px 10px 0 0; white-space: nowrap; }
-  nav a:hover { color: var(--band-text); background: rgba(255, 255, 255, .06); }
-  nav a[aria-current="page"] { background: var(--page); color: var(--text-primary); }
-
-  /* Pages */
-  main { flex: 1; padding: 28px 40px 40px; }
-  .page { display: none; }
-  .page.on { display: block; animation: rise .18s ease-out; }
-  @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-  .page-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 6px 16px; margin-bottom: 18px; }
-  h2 { font-size: 24px; margin: 0; letter-spacing: -0.01em; }
-  h3 { font-size: 15px; margin: 0 0 10px; }
-  .muted { color: var(--text-muted); font-size: 13px; }
-  .lede { color: var(--text-secondary); max-width: 78ch; margin: 6px 0 0; }
+  header { background: linear-gradient(135deg, var(--band-1), var(--band-2)); color: var(--band-text); padding: 30px 0 72px; }
+  header h1 { font-size: 26px; margin: 0; letter-spacing: -0.01em; }
+  header p { margin: 6px 0 0; color: var(--band-muted); max-width: 70ch; }
+  header a { color: var(--band-text); }
+  main { margin-top: -48px; padding-bottom: 40px; }
 
   .panel { background: var(--surface); border-radius: 14px; box-shadow: var(--shadow-1); padding: 20px 22px; }
-  .stack > * + * { margin-top: 20px; }
-  .cols { display: grid; gap: 20px; grid-template-columns: 3fr 2fr; }
-  @media (max-width: 900px) { .cols { grid-template-columns: 1fr; } main, .band-inner { padding-left: 18px; padding-right: 18px; } nav { padding: 0 10px; } }
+  .grid { display: grid; gap: 18px; }
+  .kpis { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .two { grid-template-columns: 1fr 1fr; margin-top: 18px; }
+  @media (max-width: 820px) { .two { grid-template-columns: 1fr; } .wrap { padding: 0 16px; } }
+  h2 { font-size: 20px; margin: 0 0 4px; letter-spacing: -0.01em; }
+  h3 { font-size: 15px; margin: 0 0 4px; }
+  .muted { color: var(--text-muted); font-size: 13px; margin: 0 0 14px; }
 
-  /* Stat tiles: raised, clickable */
-  .tiles { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
-  a.tile { display: block; text-decoration: none; color: inherit; background: var(--surface); border-radius: 14px;
-           box-shadow: var(--shadow-1); padding: 18px 20px; border-top: 3px solid var(--series-1);
-           transition: transform .12s ease, box-shadow .12s ease; }
-  a.tile:hover, a.tile:focus-visible { transform: translateY(-2px); box-shadow: var(--shadow-2); }
-  .tile .label { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-secondary); font-weight: 600; }
-  .tile .value { font-size: 32px; font-weight: 700; letter-spacing: -0.02em; margin: 4px 0 2px; font-variant-numeric: tabular-nums; }
-  .tile .note { font-size: 13px; color: var(--text-muted); }
-  .tile .go { font-size: 13px; color: var(--accent); margin-top: 8px; font-weight: 600; }
+  .kpi { border-top: 3px solid var(--series-1); }
+  .kpi .label { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-secondary); font-weight: 600; }
+  .kpi .value { font-size: 32px; font-weight: 700; letter-spacing: -0.02em; margin: 4px 0 0; font-variant-numeric: tabular-nums; }
+  .kpi .note { font-size: 13px; color: var(--text-muted); }
 
-  /* Lists */
-  table { width: 100%; border-collapse: collapse; font-size: 14px; }
-  th { text-align: left; font-weight: 600; color: var(--text-secondary); font-size: 12px; text-transform: uppercase;
-       letter-spacing: .04em; border-bottom: 1px solid var(--border); padding: 8px 10px 8px 0; background: var(--surface); position: sticky; top: 0; }
-  td { border-bottom: 1px solid var(--grid); padding: 10px 10px 10px 0; vertical-align: top; }
-  tr:last-child td { border-bottom: 0; }
-  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  td.date { white-space: nowrap; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
-  .kind { display: inline-block; font-size: 12px; color: var(--text-secondary); background: var(--surface-2);
-          border: 1px solid var(--border); border-radius: 6px; padding: 0 7px; white-space: nowrap; }
-  .chip { display: inline-block; background: var(--chip); border-radius: 999px; padding: 0 9px; font-size: 12px; white-space: nowrap; }
-  .scroll { max-height: calc(100vh - 300px); min-height: 240px; overflow: auto; }
-  .empty { color: var(--text-muted); padding: 10px 0; }
+  /* FY column chart */
+  .chart { position: relative; margin-top: 18px; }
+  .chart svg { width: 100%; height: 280px; display: block; }
+  .tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+         padding: 6px 10px; font-size: 13px; box-shadow: var(--shadow-2); opacity: 0; transition: opacity .1s; white-space: nowrap; }
 
-  .feed { list-style: none; margin: 0; padding: 0; }
-  .feed li { display: grid; grid-template-columns: 96px 1fr; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--grid); }
-  .feed li:last-child { border-bottom: 0; }
-  .feed .what { font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .04em; }
+  /* Horizontal bar lists */
+  .bars { list-style: none; margin: 0; padding: 0; }
+  .bars li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; padding: 7px 0; font-size: 14px; }
+  .bars .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bars .num { font-variant-numeric: tabular-nums; color: var(--text-secondary); }
+  .bars .track { grid-column: 1 / -1; height: 8px; background: var(--surface-2); border-radius: 4px; }
+  .bars .fill { height: 100%; background: var(--series-1); border-radius: 4px; min-width: 4px; }
 
-  /* Filters */
-  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px; }
-  .seg { display: inline-flex; background: var(--surface-2); border-radius: 10px; padding: 3px; box-shadow: inset 0 1px 2px rgba(0, 0, 0, .08); }
-  .seg button { font: inherit; font-size: 13px; border: 0; background: transparent; color: var(--text-secondary);
-                border-radius: 8px; padding: 5px 12px; cursor: pointer; }
-  .seg button[aria-pressed="true"] { background: var(--surface); color: var(--text-primary); box-shadow: var(--shadow-1); font-weight: 600; }
-  input[type="search"] { font: inherit; font-size: 14px; padding: 7px 12px; border-radius: 10px; border: 1px solid var(--border);
-                         background: var(--surface); color: var(--text-primary); min-width: 240px; box-shadow: inset 0 1px 2px rgba(0, 0, 0, .05); }
-
-  /* Chart */
-  .chart { position: relative; }
-  .chart svg { width: 100%; height: 300px; display: block; }
-  .tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--border);
-         border-radius: 8px; padding: 6px 10px; font-size: 13px; box-shadow: var(--shadow-2);
-         opacity: 0; transition: opacity .1s; white-space: nowrap; }
-  details summary { cursor: pointer; color: var(--text-secondary); font-size: 13px; margin-top: 10px; }
-
-  /* Data page */
-  .big-links { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
-  .big-links a.tile .value { font-size: 20px; }
-
-  footer { padding: 14px 40px 22px; color: var(--text-muted); font-size: 13px; }
+  /* Query section */
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 4px 0 18px; }
+  .btn { display: inline-block; border-radius: 10px; padding: 9px 16px; font-weight: 600; text-decoration: none; font-size: 14px;
+         background: var(--series-1); color: #fff; box-shadow: var(--shadow-1); border: 0; cursor: pointer; font-family: inherit; }
+  .btn.alt { background: var(--surface-2); color: var(--text-primary); border: 1px solid var(--border); }
+  .btn:hover { box-shadow: var(--shadow-2); }
+  .q { border-top: 1px solid var(--grid); padding: 14px 0; }
+  .q-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .q-head h3 { margin: 0; }
+  .q-btns { display: flex; gap: 8px; }
+  .q-btns button, .q-btns a { font: inherit; font-size: 13px; font-weight: 600; border: 1px solid var(--border); background: var(--surface-2);
+                               color: var(--text-primary); border-radius: 8px; padding: 4px 10px; cursor: pointer; text-decoration: none; }
+  pre { background: var(--code); border-radius: 8px; padding: 10px 12px; overflow-x: auto; font-size: 12.5px; margin: 8px 0 0; }
+  code { background: var(--code); border-radius: 4px; padding: 0 4px; font-size: 13px; }
+  details { margin-top: 10px; } summary { cursor: pointer; font-weight: 600; }
+  details.sql { margin-top: 4px; } details.sql summary { font-weight: 400; font-size: 13px; color: var(--text-muted); }
+  #queries { display: grid; grid-template-columns: 1fr 1fr; column-gap: 28px; }
+  @media (max-width: 820px) { #queries { grid-template-columns: 1fr; } }
+  .q { padding: 12px 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px; }
+  td, th { text-align: left; border-bottom: 1px solid var(--grid); padding: 6px 10px 6px 0; vertical-align: top; }
+  th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-secondary); }
+  footer { color: var(--text-muted); font-size: 13px; padding: 0 0 28px; }
 </style>
 </head>
 <body>
-<header class="band">
-  <div class="band-inner">
-    <div>
-      <h1>Defense Drone Policy Tracker</h1>
-      <p class="sub">How Congress and DoD shape the military drone market. Updated weekly.</p>
-    </div>
-    <div class="updated" id="updated"></div>
+<header>
+  <div class="wrap">
+    <h1>Defense Drone Dashboard</h1>
+    <p>Weekly numbers on U.S. defense drone policy and federal drone contracts. <span id="substack"></span><span id="updated"></span></p>
   </div>
-  <nav aria-label="Pages">
-    <a href="#overview">Overview</a>
-    <a href="#week">This week</a>
-    <a href="#policies">Policies</a>
-    <a href="#contracts">Contracts</a>
-    <a href="#data">Data</a>
-  </nav>
 </header>
 
-<main>
-  <!-- Overview -->
-  <section class="page" id="overview" aria-labelledby="h-overview">
-    <div class="page-head">
-      <div>
-        <h2 id="h-overview">Overview</h2>
-        <p class="lede" id="track-summary"></p>
-      </div>
-    </div>
-    <div class="stack">
-      <div class="tiles" id="tiles"></div>
-      <div class="panel">
-        <h3>Latest changes</h3>
-        <ul class="feed" id="latest"></ul>
-        <p style="margin:10px 0 0"><a href="#week">All changes this week →</a></p>
-      </div>
-    </div>
+<main class="wrap">
+  <div class="grid kpis" id="kpis"></div>
+
+  <section class="panel" style="margin-top:18px">
+    <h2>Federal drone contract obligations by fiscal year</h2>
+    <p class="muted">All agencies, product code PSC 1550 (unmanned aircraft). Source: USASpending.gov bulk data.</p>
+    <div class="chart" id="fy-chart"><svg role="img" aria-labelledby="fy-title"><title id="fy-title">Obligations by fiscal year</title></svg><div class="tip"></div></div>
   </section>
 
-  <!-- This week -->
-  <section class="page" id="week" aria-labelledby="h-week">
-    <div class="page-head">
-      <h2 id="h-week">This week</h2>
-      <span class="muted">Changes found in the past 7 days. Dates are when the action happened.</span>
-    </div>
-    <div class="panel"><div class="scroll" id="week-body"></div></div>
-  </section>
+  <div class="grid two">
+    <section class="panel">
+      <h2>Policies by lever</h2>
+      <p class="muted">Bills, rules and executive actions tracked, grouped by what they act on.</p>
+      <ul class="bars" id="levers"></ul>
+    </section>
+    <section class="panel">
+      <h2 id="rec-title">Top contract recipients</h2>
+      <p class="muted">PSC 1550 obligations in the latest fiscal year.</p>
+      <ul class="bars" id="recipients"></ul>
+    </section>
+  </div>
 
-  <!-- Policies -->
-  <section class="page" id="policies" aria-labelledby="h-policies">
-    <div class="page-head">
-      <h2 id="h-policies">Policies</h2>
-      <span class="muted">Bills, rulemakings and executive actions in the defense track.</span>
+  <section class="panel" style="margin-top:18px" id="query">
+    <h2>Query the data</h2>
+    <p class="muted">Every table behind this page, as one SQLite file refreshed weekly. Copy a query below, or run it in your browser with Datasette Lite (loads in about 10 seconds).</p>
+    <div class="actions">
+      <a class="btn" href="data/uas_public.db" download>Download uas_public.db</a>
+      <a class="btn alt" id="open-lite">Open in your browser</a>
     </div>
-    <div class="panel">
-      <div class="toolbar">
-        <div class="seg" id="kind-filter" role="group" aria-label="Filter by type"></div>
-        <input type="search" id="policy-search" placeholder="Search titles" aria-label="Search policies">
-      </div>
-      <div class="scroll" id="policy-table"></div>
-    </div>
-  </section>
-
-  <!-- Contracts -->
-  <section class="page" id="contracts" aria-labelledby="h-contracts">
-    <div class="page-head">
-      <h2 id="h-contracts">Contracts</h2>
-      <span class="muted">Federal drone contracts (PSC 1550). Source: USASpending.gov.</span>
-    </div>
-    <div class="stack">
-      <div class="panel">
-        <h3>Drone contract obligations by month, FY2020–FY2026</h3>
-        <div class="chart" id="obl-chart"><svg role="img" aria-labelledby="obl-title"><title id="obl-title">Monthly obligations for drone contracts</title></svg><div class="tip"></div></div>
-        <p class="muted" style="margin:6px 0 0">Bulk data. Recent months fill in as agencies post (DoD reports about 90 days late).</p>
-        <details><summary>Show as table</summary><div class="scroll" id="obl-table"></div></details>
-      </div>
-      <div class="cols">
-        <div class="panel"><h3>Contract actions, last 60 days</h3><div class="scroll" id="actions"></div></div>
-        <div class="panel"><h3>Top recipients, this fiscal year</h3><div id="recipients"></div></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Data -->
-  <section class="page" id="data" aria-labelledby="h-data">
-    <div class="page-head">
-      <h2 id="h-data">Data</h2>
-      <span class="muted">Everything behind this site, refreshed weekly.</span>
-    </div>
-    <div class="big-links">
-      <a class="tile" href="query.html"><div class="label">Query</div><div class="value">Run SQL in your browser</div>
-        <div class="note">Recommended queries on bills, rules, comments and contracts.</div><div class="go">Open the query page →</div></a>
-      <a class="tile" href="data/uas_public.db" download><div class="label">Download</div><div class="value">uas_public.db</div>
-        <div class="note">One SQLite file. Opens in any SQLite tool.</div><div class="go">Download →</div></a>
-      <a class="tile" href="https://github.com/WalkerSimpson1/UAS_Project"><div class="label">Code</div><div class="value">The pipeline</div>
-        <div class="note">How the data is collected, grouped and checked each week.</div><div class="go">View on GitHub →</div></a>
-    </div>
-    <p class="muted" style="margin-top:18px">Sources: LegiScan, Federal Register, Regulations.gov, USASpending.gov. Policy groupings and analysis by the author; change lines are generated from the sources.</p>
+    <div id="queries"></div>
+    <details>
+      <summary>Tables and joins</summary>
+      <table><thead><tr><th>Table</th><th>What it holds</th></tr></thead><tbody id="tables"></tbody></table>
+      <p class="muted" style="margin-top:10px">Joins: <code>policies.id</code> = <code>policy_events.policy_id</code> = <code>policy_sources.policy_id</code>;
+        <code>policy_sources.source_id</code> is a <code>bills.bill_id</code> or <code>regulatory_documents.id</code>; <code>policies.lever</code> = <code>levers.slug</code>.
+        Use <code>bulk_transactions</code> for market totals. Not included: AI drafts, the author's notes, raw API payloads and commenters' names.</p>
+    </details>
   </section>
 </main>
 
-<footer id="run"></footer>
+<footer class="wrap" id="foot">Sources: LegiScan, Federal Register, Regulations.gov, USASpending.gov.
+  <a href="https://github.com/WalkerSimpson1/UAS_Project">Code on GitHub</a>.</footer>
 
 <script>
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
 const money = (n) => n == null ? "" : (Math.abs(n) >= 1e9 ? "$" + (n / 1e9).toFixed(2) + "B"
-                    : Math.abs(n) >= 1e6 ? "$" + (n / 1e6).toFixed(1) + "M"
+                    : Math.abs(n) >= 1e6 ? "$" + (n / 1e6).toFixed(0) + "M"
                     : Math.abs(n) >= 1e3 ? "$" + Math.round(n / 1e3) + "K" : "$" + Math.round(n));
-const TYPE = { new: "New", status_change: "Action", text_change: "New text", new_document: "New document",
-               comment_period: "Comment period", new_comments: "Comments", other: "Update" };
-const KIND = { bill: "Bill", rulemaking: "Rulemaking", executive_action: "Executive action", litigation: "Litigation", other: "Notice" };
-const fyOf = (month) => { const [y, m] = month.split("-").map(Number); return m >= 10 ? y + 1 : y; };
+const load = (name) => fetch(`data/${name}.json`).then((r) => r.json());
+const title = (s) => s.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase()).replace(/\bLlc\b/g, "LLC").replace(/\bUsa\b/g, "USA");
 
-async function load(name) { const r = await fetch(`data/${name}.json`); return r.json(); }
-function policyLink(p) {
-  const url = p.analysis_url || p.bill_url || p.document_url;
-  return url ? `<a href="${esc(url)}">${esc(p.title)}</a>` : esc(p.title);
-}
+const dbUrl = new URL("data/uas_public.db", location.href).href;
+const metaUrl = new URL("data/metadata.json", location.href).href;
+const lite = (hash = "") => `https://lite.datasette.io/?url=${encodeURIComponent(dbUrl)}&metadata=${encodeURIComponent(metaUrl)}${hash}`;
+$("#open-lite").href = lite("#/uas_public");
 
-/* ---- pages (hash routing) ---- */
-const PAGES = ["overview", "week", "policies", "contracts", "data"];
-const onShow = {};
-function show() {
-  const id = PAGES.includes(location.hash.slice(1)) ? location.hash.slice(1) : "overview";
-  document.querySelectorAll(".page").forEach((p) => p.classList.toggle("on", p.id === id));
-  document.querySelectorAll("nav a").forEach((a) =>
-    a.getAttribute("href") === "#" + id ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"));
-  if (onShow[id]) { onShow[id](); delete onShow[id]; }
-  window.scrollTo(0, 0);
-}
-window.addEventListener("hashchange", show);
-
-/* ---- overview ---- */
-function renderOverview(track, weekly, policies, obl) {
-  $("#track-summary").textContent = track ? track.summary : "";
-  const byFy = {};
-  obl.forEach((d) => { const fy = fyOf(d.month); byFy[fy] = (byFy[fy] || 0) + Number(d.obligated); });
-  const fys = Object.keys(byFy).map(Number).sort();
-  const lastFy = fys[fys.length - 1], prevFy = fys[fys.length - 2];
-  const change = prevFy ? Math.round(100 * (byFy[lastFy] / byFy[prevFy] - 1)) : null;
-  const bills = policies.filter((p) => p.kind === "bill").length;
+function kpis(summary, fy) {
+  const last = fy[fy.length - 1], prev = fy[fy.length - 2];
+  const change = prev ? Math.round(100 * (last.obligated / prev.obligated - 1)) : null;
   const tiles = [
-    { href: "#week", label: "Changes this week", value: weekly.length, note: "New bills, actions, documents and comments" },
-    { href: "#policies", label: "Policies tracked", value: policies.length, note: `${bills} bills, ${policies.length - bills} rules and actions` },
-    { href: "#contracts", label: `FY${lastFy} drone obligations`, value: money(byFy[lastFy]),
-      note: change == null ? "PSC 1550, all agencies" : `${change >= 0 ? "Up" : "Down"} ${Math.abs(change)}% from FY${prevFy}` },
-    { href: "#data", label: "Open data", value: "SQL", note: "Query the database in your browser" },
+    [`FY${last.fy} drone obligations`, money(last.obligated), change == null ? "PSC 1550" : `${change >= 0 ? "Up" : "Down"} ${Math.abs(change)}% from FY${prev.fy}`],
+    ["Counter-drone awards", money(summary.counter_uas_amount), `${summary.counter_uas_awards} awards outside PSC 1550`],
+    ["Policies tracked", summary.policies, "Bills, rules and executive actions"],
+    ["Changes this week", summary.changes_this_week, "New actions, documents and comments"],
   ];
-  $("#tiles").innerHTML = tiles.map((t) => `<a class="tile" href="${t.href}"><div class="label">${esc(t.label)}</div>
-    <div class="value">${esc(t.value)}</div><div class="note">${esc(t.note)}</div></a>`).join("");
-  const bySlug = Object.fromEntries(policies.map((p) => [p.slug, p]));
-  $("#latest").innerHTML = weekly.length ? weekly.slice(0, 5).map((r) => `<li><span class="date muted">${esc(r.event_date)}</span>
-    <div><div class="what">${esc(TYPE[r.event_type] || r.event_type)}</div>${policyLink(bySlug[r.slug] || r)}
-    <div class="muted">${esc(r.summary)}</div></div></li>`).join("") : `<li class="empty">No changes this week.</li>`;
+  $("#kpis").innerHTML = tiles.map(([l, v, n]) => `<div class="panel kpi"><div class="label">${esc(l)}</div>
+    <div class="value">${esc(v)}</div><div class="note">${esc(n)}</div></div>`).join("");
 }
 
-/* ---- this week ---- */
-function renderWeek(rows, policies) {
-  const bySlug = Object.fromEntries(policies.map((p) => [p.slug, p]));
-  $("#week-body").innerHTML = rows.length ? `<table><thead><tr><th>Date</th><th>Policy</th><th>Change</th></tr></thead><tbody>${
-    rows.map((r) => `<tr><td class="date">${esc(r.event_date)}</td>
-      <td>${policyLink(bySlug[r.slug] || r)} <span class="kind">${esc(KIND[r.kind] || r.kind)}</span>
-        ${r.analysis_url ? ` · <a href="${esc(r.analysis_url)}">analysis</a>` : ""}</td>
-      <td><strong style="font-size:12px;color:var(--text-secondary)">${esc(TYPE[r.event_type] || r.event_type)}</strong><br>${esc(r.summary)}</td></tr>`).join("")
-    }</tbody></table>` : `<p class="empty">No changes this week.</p>`;
+function bars(el, items) {
+  const max = Math.max(...items.map((d) => d.v), 1);
+  $(el).innerHTML = items.map((d) => `<li title="${esc(d.tip || "")}"><span class="name">${esc(d.name)}</span>
+    <span class="num">${esc(d.label)}</span><div class="track"><div class="fill" style="width:${(100 * d.v / max).toFixed(1)}%"></div></div></li>`).join("");
 }
 
-/* ---- policies ---- */
-function renderPolicies(policies) {
-  let kind = null, q = "";
-  const kinds = [...new Set(policies.map((p) => p.kind))];
-  $("#kind-filter").innerHTML = `<button data-k="">All (${policies.length})</button>` + kinds.map((k) =>
-    `<button data-k="${esc(k)}">${esc(KIND[k] || k)} (${policies.filter((p) => p.kind === k).length})</button>`).join("");
-  const draw = () => {
-    const list = policies.filter((p) => (!kind || p.kind === kind) && (!q || p.title.toLowerCase().includes(q)))
-      .sort((a, b) => (b.latest?.date || "").localeCompare(a.latest?.date || ""));
-    $("#policy-table").innerHTML = list.length ? `<table><thead><tr><th>Policy</th><th>Type</th><th>Latest</th></tr></thead><tbody>${
-      list.map((p) => `<tr><td>${policyLink(p)}${p.analysis_url ? ` · <a href="${esc(p.analysis_url)}">analysis</a>` : ""}</td>
-        <td><span class="kind">${esc(KIND[p.kind] || p.kind)}</span></td>
-        <td>${p.latest ? `<span class="date">${esc(p.latest.date)}</span> · ${esc(p.latest.summary)}` : ""}</td></tr>`).join("")
-      }</tbody></table>` : `<p class="empty">No policies match.</p>`;
-    document.querySelectorAll("#kind-filter button").forEach((b) => b.setAttribute("aria-pressed", String((b.dataset.k || null) === kind)));
-  };
-  $("#kind-filter").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) { kind = b.dataset.k || null; draw(); } });
-  $("#policy-search").addEventListener("input", (e) => { q = e.target.value.trim().toLowerCase(); draw(); });
-  draw();
-}
-
-/* ---- contracts ---- */
-function renderChart(series) {
-  const data = series.map((d) => ({ month: d.month, v: Number(d.obligated) }));
-  const svg = $("#obl-chart svg"), tip = $("#obl-chart .tip");
-  const W = svg.clientWidth || 900, H = 300, m = { t: 12, r: 8, b: 28, l: 56 };
-  const max = Math.max(...data.map((d) => d.v), 1);
-  const step = Math.pow(10, Math.floor(Math.log10(max))), top = Math.ceil(max / step) * step;
-  const y = (v) => m.t + (H - m.t - m.b) * (1 - Math.max(v, 0) / top);
-  const bw = (W - m.l - m.r) / data.length;
-  let g = "";
-  for (let i = 0; i <= 4; i++) {
-    const v = top * i / 4, yy = y(v);
-    g += `<line x1="${m.l}" x2="${W - m.r}" y1="${yy}" y2="${yy}" stroke="var(--grid)"/>`
-       + `<text x="${m.l - 8}" y="${yy + 4}" text-anchor="end" font-size="11" fill="var(--text-muted)">${money(v)}</text>`;
-  }
-  data.forEach((d, i) => {
-    const x = m.l + i * bw, h = y(0) - y(d.v), w = Math.max(bw - 2, 1), r = Math.min(4, w / 2, h);
-    if (h > 0) g += `<path d="M${x + 1},${y(0)} v${-(h - r)} q0,${-r} ${r},${-r} h${w - 2 * r} q${r},0 ${r},${r} v${h - r} z" fill="var(--series-1)"/>`;
-    if (d.month.endsWith("-10")) g += `<text x="${x + bw / 2}" y="${H - 8}" text-anchor="middle" font-size="11" fill="var(--text-muted)">FY${fyOf(d.month)}</text>`;
-    g += `<rect data-i="${i}" x="${x}" y="${m.t}" width="${bw}" height="${H - m.t - m.b}" fill="transparent"/>`;
+function fyChart(fy) {
+  const svg = $("#fy-chart svg"), tip = $("#fy-chart .tip");
+  const W = svg.clientWidth || 900, H = 280, m = { t: 22, r: 8, b: 28, l: 56 };
+  const max = Math.max(...fy.map((d) => d.obligated)) * 1.1;
+  const step = Math.pow(10, Math.floor(Math.log10(max))) / 2;
+  const ticks = []; for (let v = 0; v <= max; v += step) ticks.push(v);
+  const y = (v) => m.t + (H - m.t - m.b) * (1 - v / max);
+  const band = (W - m.l - m.r) / fy.length, bw = Math.min(64, band * 0.55);
+  let g = ticks.map((v) => `<line x1="${m.l}" x2="${W - m.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)"/>
+    <text x="${m.l - 8}" y="${y(v) + 4}" text-anchor="end" font-size="12" fill="var(--text-muted)">${money(v)}</text>`).join("");
+  fy.forEach((d, i) => {
+    const x = m.l + band * i + (band - bw) / 2, h = y(0) - y(d.obligated), r = Math.min(4, h);
+    g += `<path d="M${x},${y(0)} v${-(h - r)} q0,${-r} ${r},${-r} h${bw - 2 * r} q${r},0 ${r},${r} v${h - r} z" fill="var(--series-1)"/>
+      <text x="${x + bw / 2}" y="${H - 8}" text-anchor="middle" font-size="12" fill="var(--text-secondary)">FY${d.fy}</text>
+      <rect x="${m.l + band * i}" y="${m.t}" width="${band}" height="${H - m.t - m.b}" fill="transparent" data-i="${i}"/>`;
   });
+  const last = fy[fy.length - 1], lx = m.l + band * (fy.length - 1) + band / 2;
+  g += `<text x="${lx}" y="${y(last.obligated) - 6}" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-primary)">${money(last.obligated)}</text>`;
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
   svg.insertAdjacentHTML("beforeend", g);
   svg.addEventListener("mousemove", (e) => {
     const i = e.target.dataset?.i; if (i == null) { tip.style.opacity = 0; return; }
-    const d = data[i];
-    tip.innerHTML = `<strong>${d.month}</strong> (FY${fyOf(d.month)})<br>${money(d.v)} obligated`;
-    const box = svg.getBoundingClientRect();
-    tip.style.left = Math.min(e.clientX - box.left + 12, box.width - 170) + "px";
-    tip.style.top = (e.clientY - box.top - 46) + "px"; tip.style.opacity = 1;
+    const d = fy[i];
+    tip.innerHTML = `<strong>FY${d.fy}</strong><br>${money(d.obligated)} · ${d.actions.toLocaleString()} actions`;
+    tip.style.left = Math.min(e.offsetX + 12, W - 180) + "px"; tip.style.top = (e.offsetY - 10) + "px"; tip.style.opacity = 1;
   });
-  svg.addEventListener("mouseleave", () => (tip.style.opacity = 0));
-  $("#obl-table").innerHTML = `<table><thead><tr><th>Month</th><th class="num">Obligated</th></tr></thead><tbody>${
-    series.slice().reverse().map((d) => `<tr><td>${d.month}</td><td class="num">${money(Number(d.obligated))}</td></tr>`).join("")}</tbody></table>`;
+  svg.addEventListener("mouseleave", () => { tip.style.opacity = 0; });
 }
-function renderRecipients(rows) {
-  $("#recipients").innerHTML = rows.length ? `<table><thead><tr><th>Recipient</th><th class="num">Awards</th><th class="num">Value</th></tr></thead><tbody>${
-    rows.map((r) => `<tr><td>${esc(r.recipient)}</td><td class="num">${r.awards}</td><td class="num">${money(r.amount)}</td></tr>`).join("")}</tbody></table>`
-    : `<p class="empty">No awards yet this fiscal year.</p>`;
-}
-function renderActions(rows) {
-  $("#actions").innerHTML = rows.length ? `<table><thead><tr><th>Date</th><th>Recipient</th><th>Description</th><th class="num">Amount</th></tr></thead><tbody>${
-    rows.map((r) => `<tr><td class="date">${esc(r.action_date)}</td><td>${esc(r.recipient_name)}<div class="muted">${esc(r.awarding_agency)}</div></td>
-      <td><a href="${esc(r.url)}">${esc((r.transaction_description || "").slice(0, 140))}${(r.transaction_description || "").length > 140 ? "…" : ""}</a>
-        ${r.counter_uas ? ` <span class="chip">counter-UAS</span>` : ""}${r.late_posting ? ` <span class="muted">(posted late)</span>` : ""}</td>
-      <td class="num">${money(r.transaction_amount)}</td></tr>`).join("")}</tbody></table>`
-    : `<p class="empty">No contract actions in the last 60 days.</p>`;
+
+function queries(meta) {
+  const db = meta.databases.uas_public;
+  $("#queries").innerHTML = Object.entries(db.queries).map(([name, q], i) => `<div class="q">
+    <div class="q-head"><h3>${esc(q.title)}</h3><div class="q-btns">
+      <button type="button" data-copy="${i}">Copy SQL</button><a href="${lite("#/uas_public/" + name)}">Run</a></div></div>
+    <details class="sql"><summary>Show SQL</summary><pre id="sql-${i}">${esc(q.sql)}</pre></details></div>`).join("");
+  $("#queries").addEventListener("click", async (e) => {
+    const b = e.target.closest("[data-copy]"); if (!b) return;
+    try { await navigator.clipboard.writeText($(`#sql-${b.dataset.copy}`).textContent); b.textContent = "Copied"; }
+    catch { b.textContent = "Select and copy"; }
+    setTimeout(() => { b.textContent = "Copy SQL"; }, 1500);
+  });
+  $("#tables").innerHTML = Object.entries(db.tables).map(([t, d]) =>
+    `<tr><td><code>${esc(t)}</code></td><td>${esc(d.description)}</td></tr>`).join("");
 }
 
 (async () => {
-  const [meta, weekly, tracks, policies, obl, actions, recipients] = await Promise.all(
-    ["meta", "weekly", "tracks", "policies", "obligations_by_month", "recent_contract_actions", "top_recipients_fy"].map(load));
-  $("#updated").textContent = "Updated " + meta.generated_at.slice(0, 10);
-  if (meta.last_run[0]) $("#run").textContent = `Last pipeline run: ${meta.last_run[0].run_id} (${meta.last_run[0].status}).`;
-  renderOverview(tracks[0], weekly, policies, obl);
-  renderWeek(weekly, policies);
-  renderPolicies(policies);
-  renderRecipients(recipients);
-  renderActions(actions);
-  onShow.contracts = () => renderChart(obl);   // needs the page visible to measure its width
-  show();
+  const [meta, summary, levers, fy, recipients, dbmeta] = await Promise.all(
+    ["meta", "summary", "levers", "obligations_by_fy", "top_recipients"].map(load).concat(fetch("data/metadata.json").then((r) => r.json())));
+  const track = meta.track[0];
+  if (track?.substack_url) $("#substack").innerHTML = `Analysis on <a href="${esc(track.substack_url)}">Substack</a>. `;
+  $("#updated").textContent = "Updated " + meta.generated_at.slice(0, 10) + ".";
+  kpis(summary, fy);
+  fyChart(fy);
+  bars("#levers", levers.filter((l) => l.policies > 0).map((l) => ({ name: l.name, v: l.policies, label: l.policies, tip: l.summary })));
+  $("#rec-title").textContent = `Top contract recipients, FY${fy[fy.length - 1].fy}`;
+  bars("#recipients", recipients.map((r) => ({ name: title(r.recipient), v: r.obligated, label: money(r.obligated), tip: `${r.actions} actions` })));
+  queries(dbmeta);
 })();
 </script>
 </body>

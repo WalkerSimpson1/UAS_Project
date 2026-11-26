@@ -1,0 +1,52 @@
+[
+ {
+  "recipient": "GENERAL ATOMICS AERONAUTICAL SYSTEMS, INC.",
+  "actions": 182,
+  "obligated": 879177986
+ },
+ {
+  "recipient": "AEROVIRONMENT, INC",
+  "actions": 68,
+  "obligated": 310944372
+ },
+ {
+  "recipient": "GRIFFON AEROSPACE, INC.",
+  "actions": 35,
+  "obligated": 206611349
+ },
+ {
+  "recipient": "LEIDOS, INC.",
+  "actions": 85,
+  "obligated": 203547376
+ },
+ {
+  "recipient": "KRATOS UNMANNED AERIAL SYSTEMS, INC",
+  "actions": 23,
+  "obligated": 94809694
+ },
+ {
+  "recipient": "NORTHROP GRUMMAN SYSTEMS CORPORATION",
+  "actions": 29,
+  "obligated": 83924822
+ },
+ {
+  "recipient": "ANDURIL INDUSTRIES, INC.",
+  "actions": 24,
+  "obligated": 74808021
+ },
+ {
+  "recipient": "STREAM TECHNO LLC",
+  "actions": 9,
+  "obligated": 39992635
+ },
+ {
+  "recipient": "BAE SYSTEMS INFORMATION AND ELECTRONIC SYSTEMS INTEGRATION INC.",
+  "actions": 17,
+  "obligated": 38976662
+ },
+ {
+  "recipient": "KRAUS HAMDANI AEROSPACE, INC.",
+  "actions": 8,
+  "obligated": 21480989
+ }
+]

@@ -116,9 +116,9 @@ UAS_Project/
 │   ├── backfill.py                # Manual backfills: Federal Register, dockets, bulk contracts
 │   └── migrate_mongo_to_pg.py     # One-time: MongoDB → Postgres migration (done)
 │
-├── site/                          # GitHub Pages: dashboard and query page
+├── site/                          # GitHub Pages: weekly analytics dashboard + SQL queries
 │   ├── index.html
-│   ├── query.html                 # Datasette Lite query page
+│   ├── query.html                 # Redirects to index.html#query
 │   └── data/                      # Weekly JSON + uas_public.db (SQLite)
 │
 ├── .github/workflows/pages.yml    # Deploys site/ on every push to main
@@ -168,7 +168,7 @@ This data feeds into one PostgreSQL 18 database, running in Docker on my Windows
 ↓ <br>
 The pipeline groups new and changed items into **policies**, sorts them into **tracks**, and drafts a first-pass summary of each for me to review. <br>
 ↓ <br>
-Each week it publishes a dashboard and a public, queryable copy of the database on GitHub Pages. My written analysis goes on Substack. <br>
+Each week it publishes a small analytics dashboard and a public, queryable copy of the database on GitHub Pages. The tracker itself, my written analysis, lives on Substack. <br>
 <br>
 I started on MongoDB because I covered it in my Databases class at LSE and had a MongoDB certification course through the GitHub Student Developer Pack. In November 2026 I moved to **PostgreSQL**: the data is relational (bills ↔ policies ↔ tracks ↔ contracts), SQL is what most business and government analytics teams use, and Docker keeps the setup to one command. The MongoDB-era design is kept in `docs/mongodb_schema.md`.
 
@@ -253,9 +253,9 @@ If a check fails, the run is marked failed (exit code 1), the data is kept, and 
 ### Outputs
 Once validation passes, `weekly_run.py` produces three outputs and prunes old backups.
 1. **Dashboard data:** `export_site.py` writes...
-   - `weekly.json`: every change found in the past 7 days in the active track
-   - `tracks.json` and `policies.json`: the active track and its policies, with source links
-   - `obligations_by_month.json`, `top_recipients_fy.json`, `recent_contract_actions.json`: contract charts and tables
+   - `summary.json`: headline numbers (policies tracked, changes this week, counter-drone awards)
+   - `levers.json`: policies per lever in the active track
+   - `obligations_by_fy.json`, `top_recipients.json`: PSC 1550 obligations by fiscal year and the top recipients of the latest year
 2. **Public database:** `export_public_db.py` writes `uas_public.db` (SQLite) and `metadata.json` with recommended queries. See [Live Database](#live-database).
 3. **Publish:** with `--publish`, the run commits `site/data` and pushes it to `main`, and the GitHub Actions workflow deploys `site/` to GitHub Pages.
 4. **Prune:** keeps the last 12 end-of-run dumps and the last 2 pre-run dumps.
@@ -270,7 +270,7 @@ Every week, `export_public_db.py` copies the public tables from Postgres into on
 <summary><b>Query the live database (read-only)</b></summary>
 
 **Dashboard:** [walkersimpson1.github.io/UAS_Project](https://walkersimpson1.github.io/UAS_Project/) <br>
-**Query page:** [walkersimpson1.github.io/UAS_Project/query.html](https://walkersimpson1.github.io/UAS_Project/query.html) -- opens the database in Datasette Lite, with recommended queries ready to edit. <br>
+**Queries:** [walkersimpson1.github.io/UAS_Project/#query](https://walkersimpson1.github.io/UAS_Project/#query) -- recommended queries to copy, or run in your browser with Datasette Lite. <br>
 **Download:** [uas_public.db](https://walkersimpson1.github.io/UAS_Project/data/uas_public.db) -- opens in any SQLite tool.
 
 **sqlite3:**

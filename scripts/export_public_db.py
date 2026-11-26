@@ -24,7 +24,10 @@ DB = OUT / "uas_public.db"
 TABLES = [
     ("tracks", "SELECT slug, name, summary, status, substack_url FROM tracks WHERE status <> 'archived'",
      "Groupings of related policies. status 'active' = the published focus; 'draft' = watch list."),
-    ("policies", """SELECT p.id, p.slug, p.kind, p.title, p.created_at::date AS tracked_since,
+    ("levers", """SELECT l.slug, l.track_slug, l.name, l.summary, l.sort_order FROM levers l
+                  JOIN tracks t ON t.slug = l.track_slug WHERE t.status <> 'archived'""",
+     "Policy levers inside a track: funding, buying rules, trade controls, foreign bans, other."),
+    ("policies", """SELECT p.id, p.slug, p.kind, p.title, p.lever, p.created_at::date AS tracked_since,
                            CASE WHEN a.status = 'published' THEN 'published'
                                 WHEN a.status = 'not_relevant' THEN 'not_relevant' ELSE 'tracked' END AS status,
                            CASE WHEN a.status = 'published' THEN a.substack_url END AS analysis_url
@@ -92,6 +95,12 @@ order by e.event_date desc"""),
 select t.name, count(*) as policies, sum(p.kind = 'bill') as bills, sum(p.kind = 'rulemaking') as rulemakings
 from policy_tracks pt join tracks t on t.slug = pt.track_slug join policies p on p.id = pt.policy_id
 where p.status <> 'not_relevant' group by t.name order by policies desc"""),
+    "policies_by_lever": ("Defense policies by lever", """
+select l.name as lever, count(p.id) as policies, sum(p.kind = 'bill') as bills,
+       sum(p.kind = 'rulemaking') as rulemakings,
+       max((select max(event_date) from policy_events e where e.policy_id = p.id)) as last_change
+from levers l left join policies p on p.lever = l.slug and p.status <> 'not_relevant'
+group by l.slug order by l.sort_order"""),
     "track_policies": ("Everything in one track, latest change first", """
 select p.title, p.kind,
        (select max(event_date) from policy_events e where e.policy_id = p.id) as last_change

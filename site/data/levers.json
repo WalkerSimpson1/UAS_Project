@@ -1,0 +1,32 @@
+[
+ {
+  "slug": "funding",
+  "name": "Funding and mandates",
+  "summary": "NDAA, defense appropriations, and bills that direct DoD drone programs, reviews or strategy.",
+  "policies": 9
+ },
+ {
+  "slug": "procurement",
+  "name": "Buying rules",
+  "summary": "How the government buys drones: FAR/DFARS, domestic sourcing, the drone dominance orders.",
+  "policies": 6
+ },
+ {
+  "slug": "trade",
+  "name": "Trade and export controls",
+  "summary": "Export rules, the Entity List, Section 232/301 tariffs, sanctions and arms sales.",
+  "policies": 17
+ },
+ {
+  "slug": "foreign-bans",
+  "name": "Foreign drone bans",
+  "summary": "The FCC Covered List, DJI and other bans on Chinese or foreign drones and parts.",
+  "policies": 12
+ },
+ {
+  "slug": "other",
+  "name": "Other",
+  "summary": "Defense-relevant items that fit none of the four levers.",
+  "policies": 2
+ }
+]

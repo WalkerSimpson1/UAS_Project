@@ -28,9 +28,9 @@ There is no test suite or linter. Dependencies are pinned in `requirements.txt`,
 - Loaders (source tables only, each safe to re-run): `legiscan_loader.py` (bills, bill_snapshots; keyword filter + `WATCH_BILLS` + `WATCH_TITLE_RE` for the NDAA and DoD appropriations), `usaspending_loader.py` (contract_activity_feed, contract_transactions, contract_awards; PSC 1550 plus a counter-UAS `keyword_search` across all PSC codes; steps run in their own transactions), `federal_register_loader.py` (keeps a document if a keyword is in its title/abstract, or if it's from DoD/BIS/OFAC/USTR: `is_relevant`), `regulations_loader.py` (dockets of this run's FR documents; comment details capped per run by the 1000/hour limit).
 - `sync_policies.py`: source rows → `policies` / `policy_sources` (companion bills by title; documents by docket/RIN/FR number), `policy_events` (unique per policy/date/type/source), `analyses` rows, rule-based `policy_tracks`.
 - `summarize.py`: `claude -p --tools "" --json-schema ...` with a per-kind fact sheet; drafts only policies in an `active` track (`--all` for the rest); writes `analyses.ai_*`, sets `ai_drafted`, adds `assigned_by='ai'` track suggestions. Never overwrites human fields.
-- `export_public_db.py`: `site/data/uas_public.db` + `metadata.json` (recommended queries) for `site/query.html` / Datasette Lite.
+- `export_public_db.py`: `site/data/uas_public.db` + `metadata.json` (recommended queries, shown with copy/run buttons on `site/index.html#query`).
 - `backfill.py`: one-off FR / Regulations.gov / bulk-contracts backfills (P19).
-- `export_site.py`: `site/data/*.json` for `site/index.html`. Shows only the `active` track (now `defense-drones`, P22); excludes AI drafts; it shows source-derived event lines and links to published analyses only.
+- `export_site.py`: `site/data/*.json` for `site/index.html`, a one-page weekly analytics dashboard (P25: headline numbers, obligations by FY, policies by lever, top recipients) plus the query section. The tracker itself is the Substack; the site has no policy lists. Deletes stale JSON from older layouts.
 - `migrate_mongo_to_pg.py`: the one-time import (done 2026-11-23, P9).
 - `analysis/USASpending_Past_Visualizations.ipynb` reads Postgres via `pg_common.read_sql`.
 
@@ -39,6 +39,7 @@ There is no test suite or linter. Dependencies are pinned in `requirements.txt`,
 - Fiscal year starts Oct 1 (`pg_common.fiscal_year`).
 - Postgres regex word boundary is `\y`, not `\b` (track_rules).
 - Tracks: one `active` track is the published focus; `draft` tracks are a watch list; `archived` ones are kept with rules off.
+- Levers (P24): each policy gets one `policies.lever` (funding, procurement, trade, foreign-bans, other) from `lever_rules` via the SQL function `assign_levers()`, run in `sync_policies`. Tune rules with a new migration; `lever_set_by = 'human'` pins a hand-set lever.
 - `contract_awards.source = 'keyword_search'` rows are counter-UAS awards outside PSC 1550; don't add them to 1550 totals.
 - `past_*` tables are the bulk downloads, FY2020 on (FY2026+ via `backfill.py contracts`); the live `contract_*` tables only hold transactions on awards the pipeline touched, so don't sum them as a market total.
 - Human workflow lives in the analysis tables: review `review_queue`, edit `analyses` (status → `in_review` / `published` / `not_relevant`, `substack_url`), confirm or change `policy_tracks`. `not_relevant` policies drop off the dashboard.
