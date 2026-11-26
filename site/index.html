@@ -120,14 +120,20 @@
       <ul class="bars" id="levers"></ul>
     </section>
     <section>
-      <h2><span class="n">03</span><span id="rec-title">Top contract recipients</span></h2>
-      <p class="note">PSC 1550 obligations in the latest fiscal year.</p>
-      <ul class="bars" id="recipients"></ul>
+      <h2><span class="n">03</span>Policies by theme</h2>
+      <p class="note">The stories they belong to. A policy can carry several themes.</p>
+      <ul class="bars" id="themes"></ul>
     </section>
   </div>
 
+  <section>
+    <h2><span class="n">04</span><span id="rec-title">Top contract recipients</span></h2>
+    <p class="note">PSC 1550 obligations in the latest fiscal year.</p>
+    <ul class="bars" id="recipients"></ul>
+  </section>
+
   <section id="query">
-    <h2><span class="n">04</span>Query the data</h2>
+    <h2><span class="n">05</span>Query the data</h2>
     <p class="note">Every table behind this page, as one SQLite file refreshed weekly. Copy a query, or run it in your browser with Datasette Lite (loads in about 10 seconds).</p>
     <div class="actions">
       <a class="btn solid" href="data/uas_public.db" download>Download uas_public.db</a>
@@ -146,7 +152,7 @@ const money = (n) => n == null ? "" : (Math.abs(n) >= 1e9 ? "$" + (n / 1e9).toFi
                     : Math.abs(n) >= 1e6 ? "$" + (n / 1e6).toFixed(0) + "M"
                     : Math.abs(n) >= 1e3 ? "$" + Math.round(n / 1e3) + "K" : "$" + Math.round(n));
 const load = (name) => fetch(`data/${name}.json`).then((r) => r.json());
-const title = (s) => s.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase()).replace(/\bLlc\b/g, "LLC").replace(/\bUsa\b/g, "USA");
+const title = (s) => s.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase()).replace(/\bLlc\b/g, "LLC").replace(/\bUsa\b/g, "USA").replace(/\bBae\b/g, "BAE");
 
 const dbUrl = new URL("data/uas_public.db", location.href).href;
 const metaUrl = new URL("data/metadata.json", location.href).href;
@@ -217,12 +223,13 @@ function queries(meta) {
 }
 
 (async () => {
-  const [meta, summary, levers, fy, recipients, dbmeta] = await Promise.all(
-    ["meta", "summary", "levers", "obligations_by_fy", "top_recipients"].map(load).concat(fetch("data/metadata.json").then((r) => r.json())));
+  const [meta, summary, levers, themes, fy, recipients, dbmeta] = await Promise.all(
+    ["meta", "summary", "levers", "themes", "obligations_by_fy", "top_recipients"].map(load).concat(fetch("data/metadata.json").then((r) => r.json())));
   $("#updated").textContent = "Updated " + meta.generated_at.slice(0, 10) + ".";
   kpis(summary, fy);
   fyChart(fy);
   bars("#levers", levers.filter((l) => l.policies > 0).map((l) => ({ name: l.name, v: l.policies, label: l.policies, tip: l.summary })));
+  bars("#themes", themes.filter((t) => t.policies > 0).map((t) => ({ name: t.name, v: t.policies, label: t.policies, tip: t.summary })));
   $("#rec-title").textContent = `Top contract recipients, FY${fy[fy.length - 1].fy}`;
   bars("#recipients", recipients.map((r) => ({ name: title(r.recipient), v: r.obligated, label: money(r.obligated), tip: `${r.actions} actions` })));
   queries(dbmeta);

@@ -1,0 +1,32 @@
+[
+ {
+  "slug": "china",
+  "name": "Cutting out China",
+  "summary": "DJI, the Covered List, Chinese parts and supply chains, and other limits aimed at China.",
+  "policies": 15
+ },
+ {
+  "slug": "industrial-base",
+  "name": "Building the U.S. industrial base",
+  "summary": "Domestic manufacturing, buy-American rules, tariffs and investigations meant to grow U.S. drone makers.",
+  "policies": 11
+ },
+ {
+  "slug": "allies-exports",
+  "name": "Arming allies and exports",
+  "summary": "Arms sales, export rules and trade deals that move U.S. drones to partners.",
+  "policies": 11
+ },
+ {
+  "slug": "military-programs",
+  "name": "Military drone programs",
+  "summary": "DoD drone strategy, reviews, sustainment and units: how the services field drones.",
+  "policies": 10
+ },
+ {
+  "slug": "counter-drone",
+  "name": "Counter-drone defense",
+  "summary": "Detecting and defeating hostile drones.",
+  "policies": 2
+ }
+]

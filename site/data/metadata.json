@@ -1,6 +1,6 @@
 {
  "title": "U.S. Drone Policy Tracker: public data",
- "description": "Exported 2026-11-24. Sources: LegiScan, Federal Register, Regulations.gov, USASpending.gov. Policy groupings and tracks by the author.",
+ "description": "Exported 2026-11-26. Sources: LegiScan, Federal Register, Regulations.gov, USASpending.gov. Policy groupings and tracks by the author.",
  "databases": {
   "uas_public": {
    "tables": {
@@ -9,6 +9,12 @@
     },
     "levers": {
      "description": "Policy levers inside a track: funding, buying rules, trade controls, foreign bans, other."
+    },
+    "themes": {
+     "description": "Story tags on policies (China, industrial base, allies, military programs, counter-drone). A policy can have several."
+    },
+    "policy_themes": {
+     "description": "Which themes each policy carries. assigned_by: rule or human."
     },
     "policies": {
      "description": "One thing analyzed: a bill with its companions, a rulemaking with its documents, an executive action."
@@ -62,6 +68,10 @@
     "policies_by_lever": {
      "title": "Defense policies by lever",
      "sql": "select l.name as lever, count(p.id) as policies, sum(p.kind = 'bill') as bills,\n       sum(p.kind = 'rulemaking') as rulemakings,\n       max((select max(event_date) from policy_events e where e.policy_id = p.id)) as last_change\nfrom levers l left join policies p on p.lever = l.slug and p.status <> 'not_relevant'\ngroup by l.slug order by l.sort_order"
+    },
+    "policies_by_theme": {
+     "title": "Defense policies by theme (a policy can have several)",
+     "sql": "select th.name as theme, count(p.id) as policies,\n       group_concat(distinct l.name) as levers\nfrom themes th left join policy_themes pt on pt.theme_slug = th.slug\nleft join policies p on p.id = pt.policy_id and p.status <> 'not_relevant'\nleft join levers l on l.slug = p.lever\ngroup by th.slug order by th.sort_order"
     },
     "track_policies": {
      "title": "Everything in one track, latest change first",

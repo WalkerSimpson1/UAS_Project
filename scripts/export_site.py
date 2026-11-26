@@ -47,6 +47,13 @@ def export(conn) -> dict:
         FROM levers l JOIN tracks t ON t.slug = l.track_slug AND t.status = 'active'
         LEFT JOIN policies p ON p.lever = l.slug AND {ACTIVE}
         GROUP BY l.slug ORDER BY l.sort_order""")
+    # Theme tags (P27): a policy can carry several, so these counts overlap.
+    data["themes"] = rows(conn, f"""
+        SELECT th.slug, th.name, th.summary, count(p.id) AS policies
+        FROM themes th JOIN tracks t ON t.slug = th.track_slug AND t.status = 'active'
+        LEFT JOIN policy_themes pt ON pt.theme_slug = th.slug AND NOT pt.excluded
+        LEFT JOIN policies p ON p.id = pt.policy_id AND {ACTIVE}
+        GROUP BY th.slug ORDER BY th.sort_order""")
     # PSC 1550 obligations per fiscal year, from the complete bulk downloads (FY2020 on). The weekly
     # API tables only hold awards the pipeline touched, so they aren't a market total.
     data["obligations_by_fy"] = rows(conn, """

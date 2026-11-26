@@ -27,6 +27,11 @@ TABLES = [
     ("levers", """SELECT l.slug, l.track_slug, l.name, l.summary, l.sort_order FROM levers l
                   JOIN tracks t ON t.slug = l.track_slug WHERE t.status <> 'archived'""",
      "Policy levers inside a track: funding, buying rules, trade controls, foreign bans, other."),
+    ("themes", """SELECT th.slug, th.track_slug, th.name, th.summary, th.sort_order FROM themes th
+                  JOIN tracks t ON t.slug = th.track_slug WHERE t.status <> 'archived'""",
+     "Story tags on policies (China, industrial base, allies, military programs, counter-drone). A policy can have several."),
+    ("policy_themes", "SELECT policy_id, theme_slug, assigned_by FROM policy_themes WHERE NOT excluded",
+     "Which themes each policy carries. assigned_by: rule or human."),
     ("policies", """SELECT p.id, p.slug, p.kind, p.title, p.lever, p.created_at::date AS tracked_since,
                            CASE WHEN a.status = 'published' THEN 'published'
                                 WHEN a.status = 'not_relevant' THEN 'not_relevant' ELSE 'tracked' END AS status,
@@ -101,6 +106,13 @@ select l.name as lever, count(p.id) as policies, sum(p.kind = 'bill') as bills,
        max((select max(event_date) from policy_events e where e.policy_id = p.id)) as last_change
 from levers l left join policies p on p.lever = l.slug and p.status <> 'not_relevant'
 group by l.slug order by l.sort_order"""),
+    "policies_by_theme": ("Defense policies by theme (a policy can have several)", """
+select th.name as theme, count(p.id) as policies,
+       group_concat(distinct l.name) as levers
+from themes th left join policy_themes pt on pt.theme_slug = th.slug
+left join policies p on p.id = pt.policy_id and p.status <> 'not_relevant'
+left join levers l on l.slug = p.lever
+group by th.slug order by th.sort_order"""),
     "track_policies": ("Everything in one track, latest change first", """
 select p.title, p.kind,
        (select max(event_date) from policy_events e where e.policy_id = p.id) as last_change
@@ -171,7 +183,7 @@ def export(conn) -> dict:
         lite.execute(f"CREATE TABLE {table} ({', '.join(cols)})")
         lite.executemany(f"INSERT INTO {table} VALUES ({', '.join('?' * len(cols))})", rows)
         counts[table] = len(rows)
-    for idx in ("policy_events(policy_id)", "policy_tracks(track_slug)", "bill_sponsors(identifier)",
+    for idx in ("policy_events(policy_id)", "policy_tracks(track_slug)", "policy_themes(theme_slug)", "bill_sponsors(identifier)",
                 "bulk_transactions(fiscal_year)", "regulatory_comments(docket_id)"):
         lite.execute(f"CREATE INDEX idx_{idx.split('(')[0]}_{idx.split('(')[1][:-1]} ON {idx}")
     lite.commit()

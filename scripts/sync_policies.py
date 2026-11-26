@@ -259,6 +259,8 @@ class Sync:
         self.stats["track_suggestions"] += cur.rowcount
         # One lever per policy from lever_rules (db/migrations/009_levers.sql, P24); human picks are kept.
         self.stats["lever_changes"] += self.conn.execute("SELECT assign_levers()").fetchone()[0]
+        # Theme tags, many per policy (010_themes.sql, P27); human rows are kept.
+        self.stats["theme_changes"] += self.conn.execute("SELECT assign_themes()").fetchone()[0]
         self.stats["policies_without_track"] = self.conn.execute(
             "SELECT count(*) FROM policies p WHERE NOT EXISTS"
             " (SELECT 1 FROM policy_tracks t WHERE t.policy_id = p.id)").fetchone()[0]

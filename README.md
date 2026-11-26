@@ -255,6 +255,7 @@ Once validation passes, `weekly_run.py` produces three outputs and prunes old ba
 1. **Dashboard data:** `export_site.py` writes...
    - `summary.json`: headline numbers (policies tracked, changes this week, counter-drone awards)
    - `levers.json`: policies per lever in the active track
+   - `themes.json`: policies per theme (tags; a policy can have several)
    - `obligations_by_fy.json`, `top_recipients.json`: PSC 1550 obligations by fiscal year and the top recipients of the latest year
 2. **Public database:** `export_public_db.py` writes `uas_public.db` (SQLite) and `metadata.json` with recommended queries. See [Live Database](#live-database).
 3. **Publish:** with `--publish`, the run commits `site/data` and pushes it to `main`, and the GitHub Actions workflow deploys `site/` to GitHub Pages.
