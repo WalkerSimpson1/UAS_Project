@@ -100,8 +100,8 @@ def md_link(text_sql: str, url_sql: str) -> str:
 
 # Short name for narrow table columns (012_short_names.sql, P30): hand-set short_title, else rule-trimmed.
 SHORT = "coalesce(p.short_title, short_name(p.title))"
-# Status dot from stage (P31): green = law / final rule / in effect, red = vetoed or failed, yellow = in progress.
-STATUS = """CASE st.stage_rank WHEN 7 THEN '🟢' WHEN 0 THEN '🔴' ELSE '🟡' END AS "Status" """
+# Status square from stage (P31): green = law / final rule / in effect, red = vetoed or failed, yellow = in progress.
+STATUS = """CASE st.stage_rank WHEN 7 THEN '🟩' WHEN 0 THEN '🟥' ELSE '🟨' END AS "Status" """
 KIND = """CASE p.kind WHEN 'bill' THEN 'Bill' WHEN 'rulemaking' THEN 'Rulemaking'
           WHEN 'executive_action' THEN 'Executive action' WHEN 'litigation' THEN 'Litigation' ELSE 'Notice' END"""
 POLICY_COLS = f"""{STATUS}, {md_link(SHORT, LINK)} AS "Policy", p.title AS "Policy (longform)", {KIND} AS "Type", st.stage AS "Stage", l.name AS "Lever",
