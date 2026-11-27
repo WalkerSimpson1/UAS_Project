@@ -100,9 +100,11 @@ def md_link(text_sql: str, url_sql: str) -> str:
 
 # Short name for narrow table columns (012_short_names.sql, P30): hand-set short_title, else rule-trimmed.
 SHORT = "coalesce(p.short_title, short_name(p.title))"
+# Status dot from stage (P31): green = law / final rule / in effect, red = vetoed or failed, yellow = in progress.
+STATUS = """CASE st.stage_rank WHEN 7 THEN '🟢' WHEN 0 THEN '🔴' ELSE '🟡' END AS "Status" """
 KIND = """CASE p.kind WHEN 'bill' THEN 'Bill' WHEN 'rulemaking' THEN 'Rulemaking'
           WHEN 'executive_action' THEN 'Executive action' WHEN 'litigation' THEN 'Litigation' ELSE 'Notice' END"""
-POLICY_COLS = f"""{md_link(SHORT, LINK)} AS "Policy", p.title AS "Policy (longform)", {KIND} AS "Type", st.stage AS "Stage", l.name AS "Lever",
+POLICY_COLS = f"""{STATUS}, {md_link(SHORT, LINK)} AS "Policy", p.title AS "Policy (longform)", {KIND} AS "Type", st.stage AS "Stage", l.name AS "Lever",
     (SELECT string_agg(th.name, '; ' ORDER BY th.sort_order) FROM policy_themes pt JOIN themes th ON th.slug = pt.theme_slug
        WHERE pt.policy_id = p.id AND NOT pt.excluded) AS "Themes",
     e.event_date AS "Last change", e.summary AS "What changed", {LINK} AS "Link" """
@@ -130,7 +132,7 @@ def export_csv(conn) -> dict:
     CSV_DIR.mkdir(parents=True, exist_ok=True)
     out = {}
     out["weekly_changes"] = write_csv("weekly_changes", conn, f"""
-        SELECT w.event_date AS "Date", {md_link(SHORT, LINK)} AS "Policy", p.title AS "Policy (longform)", {KIND} AS "Type", st.stage AS "Stage", l.name AS "Lever",
+        SELECT w.event_date AS "Date", {STATUS}, {md_link(SHORT, LINK)} AS "Policy", p.title AS "Policy (longform)", {KIND} AS "Type", st.stage AS "Stage", l.name AS "Lever",
                (SELECT string_agg(th.name, '; ' ORDER BY th.sort_order) FROM policy_themes pt JOIN themes th ON th.slug = pt.theme_slug
                   WHERE pt.policy_id = p.id AND NOT pt.excluded) AS "Themes",
                w.summary AS "What changed", {LINK} AS "Link"
