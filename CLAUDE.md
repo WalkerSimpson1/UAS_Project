@@ -40,6 +40,7 @@ There is no test suite or linter. Dependencies are pinned in `requirements.txt`,
 - Postgres regex word boundary is `\y`, not `\b` (track_rules).
 - Tracks: one `active` track is the published focus; `draft` tracks are a watch list; `archived` ones are kept with rules off.
 - Levers (P24): each policy gets one `policies.lever` (funding, procurement, trade, foreign-bans, other) from `lever_rules` via the SQL function `assign_levers()`, run in `sync_policies`. Tune rules with a new migration; `lever_set_by = 'human'` pins a hand-set lever.
+- Short names (P30): set `policies.short_title` by hand for a long title; otherwise `short_name(title)` trims it. CSVs show it as the linked "Short name".
 - Themes (P27): story tags, many per policy, in `policy_themes` from `theme_rules` via `assign_themes()` (also in `sync_policies`). Rule tags follow the rules; `assigned_by = 'human'` rows are kept (`excluded = true` vetoes a rule tag).
 - `contract_awards.source = 'keyword_search'` rows are counter-UAS awards outside PSC 1550; don't add them to 1550 totals.
 - `past_*` tables are the bulk downloads, FY2020 on (FY2026+ via `backfill.py contracts`); the live `contract_*` tables only hold transactions on awards the pipeline touched, so don't sum them as a market total.

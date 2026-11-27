@@ -91,16 +91,18 @@ LINK = """coalesce(
        ON s.source_table = 'regulatory_documents' AND d.id = s.source_id
        WHERE s.policy_id = p.id AND d.html_url IS NOT NULL
        ORDER BY d.publication_date DESC NULLS LAST LIMIT 1))"""
-# Policy names as Markdown links, which Datawrapper tables render as clickable text.
+# Short names as Markdown links, which Datawrapper tables render as clickable text.
 # Square brackets in a title would break the link, so they become parentheses.
 def md_link(text_sql: str, url_sql: str) -> str:
     return (f"CASE WHEN ({url_sql}) IS NULL THEN {text_sql} ELSE '[' || "
             f"translate({text_sql}, '[]', '()') || '](' || ({url_sql}) || ')' END")
 
 
+# Short name for narrow table columns (012_short_names.sql, P30): hand-set short_title, else rule-trimmed.
+SHORT = "coalesce(p.short_title, short_name(p.title))"
 KIND = """CASE p.kind WHEN 'bill' THEN 'Bill' WHEN 'rulemaking' THEN 'Rulemaking'
           WHEN 'executive_action' THEN 'Executive action' WHEN 'litigation' THEN 'Litigation' ELSE 'Notice' END"""
-POLICY_COLS = f"""{md_link("p.title", LINK)} AS "Policy", {KIND} AS "Type", st.stage AS "Stage", l.name AS "Lever",
+POLICY_COLS = f"""{md_link(SHORT, LINK)} AS "Short name", p.title AS "Policy", {KIND} AS "Type", st.stage AS "Stage", l.name AS "Lever",
     (SELECT string_agg(th.name, '; ' ORDER BY th.sort_order) FROM policy_themes pt JOIN themes th ON th.slug = pt.theme_slug
        WHERE pt.policy_id = p.id AND NOT pt.excluded) AS "Themes",
     e.event_date AS "Last change", e.summary AS "What changed", {LINK} AS "Link" """
@@ -128,7 +130,7 @@ def export_csv(conn) -> dict:
     CSV_DIR.mkdir(parents=True, exist_ok=True)
     out = {}
     out["weekly_changes"] = write_csv("weekly_changes", conn, f"""
-        SELECT w.event_date AS "Date", {md_link("p.title", LINK)} AS "Policy", {KIND} AS "Type", st.stage AS "Stage", l.name AS "Lever",
+        SELECT w.event_date AS "Date", {md_link(SHORT, LINK)} AS "Short name", p.title AS "Policy", {KIND} AS "Type", st.stage AS "Stage", l.name AS "Lever",
                (SELECT string_agg(th.name, '; ' ORDER BY th.sort_order) FROM policy_themes pt JOIN themes th ON th.slug = pt.theme_slug
                   WHERE pt.policy_id = p.id AND NOT pt.excluded) AS "Themes",
                w.summary AS "What changed", {LINK} AS "Link"

@@ -32,7 +32,7 @@ TABLES = [
      "Story tags on policies (China, industrial base, allies, military programs, counter-drone). A policy can have several."),
     ("policy_themes", "SELECT policy_id, theme_slug, assigned_by FROM policy_themes WHERE NOT excluded",
      "Which themes each policy carries. assigned_by: rule or human."),
-    ("policies", """SELECT p.id, p.slug, p.kind, p.title, p.lever, st.stage, st.stage_rank, p.created_at::date AS tracked_since,
+    ("policies", """SELECT p.id, p.slug, p.kind, p.title, coalesce(p.short_title, short_name(p.title)) AS short_name, p.lever, st.stage, st.stage_rank, p.created_at::date AS tracked_since,
                            CASE WHEN a.status = 'published' THEN 'published'
                                 WHEN a.status = 'not_relevant' THEN 'not_relevant' ELSE 'tracked' END AS status,
                            CASE WHEN a.status = 'published' THEN a.substack_url END AS analysis_url
